@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -448,9 +448,9 @@
             <div class="panel-title" data-lang="title">Lua Editor MTA:SA</div>
             <div class="panel-controls">
                 <div class="language-selector">
-                    <button class="lang-btn active" onclick="changeLanguage('es')">ES</button>
+                    <button class="lang-btn active" onclick="changeLanguage('en')">EN</button>
                     <button class="lang-btn" onclick="changeLanguage('pt')">PT</button>
-                    <button class="lang-btn" onclick="changeLanguage('en')">EN</button>
+                    <button class="lang-btn" onclick="changeLanguage('es')">ES</button>
                     <button class="lang-btn" onclick="changeLanguage('tr')">TR</button>
                 </div>
                 <button class="control-btn minimize-btn" onclick="minimizePanel()">_</button>
@@ -466,12 +466,12 @@
                         <input type="text" class="script-search" id="scriptSearch" data-lang-placeholder="search_script" placeholder="Buscar script..." oninput="filterScripts()">
                     </div>
                     <div class="script-list" id="scriptList">
-                        <div class="loading-message" data-lang="loading">Cargando scripts...</div>
+                        <div class="loading-message" data-lang="loading">Loading scripts...</div>
                     </div>
                     
                     <div class="script-info" id="scriptInfo">
                         <div class="info-item">
-                            <span class="info-label" data-lang="files">Archivos:</span>
+                            <span class="info-label" data-lang="files">Files:</span>
                             <span class="info-value">0</span>
                         </div>
                         <div class="info-item">
@@ -483,16 +483,16 @@
                             <span class="info-value">0</span>
                         </div>
                         <div class="info-item">
-                            <span class="info-label" data-lang="size">Tamaño:</span>
+                            <span class="info-label" data-lang="size">Size:</span>
                             <span class="info-value">0 KB</span>
                         </div>
                     </div>
                 </div>
                 
                 <div class="file-tree" id="fileTree">
-                    <h3 data-lang="files">Archivos</h3>
+                    <h3 data-lang="files">Files</h3>
                     <div id="fileList">
-                        <div class="no-selection" data-lang="no_selection">Selecciona un script de la lista</div>
+                        <div class="no-selection" data-lang="no_selection">Select a script from the list</div>
                     </div>
                     <div class="copyright">
                         <div>© 2025 <span class="brand">BranD</span></div>
@@ -504,7 +504,7 @@
             <div class="editor-container">
                 <div class="editor-tabs" id="editorTabs">
                     <div class="tab">
-                        <span data-lang="no_file_selected">Ningún archivo seleccionado</span>
+                        <span data-lang="no_file_selected">No file selected</span>
                     </div>
                 </div>
                 
@@ -516,13 +516,13 @@
                 
                 <div class="editor-footer">
                     <div class="status-info">
-                        <span data-lang="lines">Líneas</span>: <span id="lineCount">1</span>
-                        <span style="margin-left: 15px;" data-lang="characters">Caracteres</span>: <span id="charCount">0</span>
+                        <span data-lang="lines">Lines</span>: <span id="lineCount">1</span>
+                        <span style="margin-left: 15px;" data-lang="characters">Characters</span>: <span id="charCount">0</span>
                         <span style="margin-left: 15px;" id="fileStatus"></span>
                     </div>
                     <div class="action-buttons">
-                        <button class="action-btn secondary" onclick="copyCode()" data-lang="copy">Copiar</button>
-                        <button class="action-btn" onclick="sendCode()" data-lang="send" disabled>Enviar</button>
+                        <button class="action-btn secondary" onclick="copyCode()" data-lang="copy">Copy</button>
+                        <button class="action-btn" onclick="sendCode()" data-lang="send" disabled>Send</button>
                     </div>
                 </div>
             </div>
@@ -613,7 +613,7 @@
             }
         };
 
-        let currentLanguage = 'es';
+        let currentLanguage = 'en';
         let scriptsData = [];
         let filteredScripts = [];
         let currentScript = null;
