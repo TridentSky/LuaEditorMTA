@@ -24,6 +24,67 @@ local blackList = {
     "ScriptName",
 }
 
+function globToPattern(glob)
+    local pattern = glob
+
+    pattern = pattern:gsub("([%.%+%-%^%$%(%)%%])", "%%%1")
+    pattern = pattern:gsub("%*%*/%*", ".*")      -- **/*
+    pattern = pattern:gsub("%*%*", ".*")         -- **
+    pattern = pattern:gsub("%*", "[^/]*")        -- *
+
+    return "^" .. pattern .. "$"
+end
+
+function recursiveListFiles(path, useDot)
+    local entries = pathListDir(path .. (useDot and "." or ""))
+    if not entries then
+        return {}
+    end
+
+    local files = {}
+    for _, entry in ipairs(entries) do
+        local fullPath = (path:sub(-1) == "/" and path:sub(1, -2) or path) .. "/" .. entry
+
+        if pathIsDirectory(fullPath) then
+            local subFiles = recursiveListFiles(fullPath)
+            for _, f in ipairs(subFiles) do
+                table.insert(files, f)
+            end
+        elseif pathIsFile(fullPath) then
+            table.insert(files, fullPath)
+        end
+    end
+
+    return files
+end
+
+function resolveGlob(resourceName, glob)
+    local base = ":" .. resourceName .. "/"
+    local result = {}
+
+    local allFiles = recursiveListFiles(base, true)
+    local pattern = globToPattern(glob)
+
+    for _, file in ipairs(allFiles) do
+        local relativePath = file:sub(#base + 1)
+        if relativePath:match(pattern) then
+            table.insert(result, relativePath)
+        end
+    end
+
+    return result
+end
+
+local globCache = {}
+local function resolveGlobCached(resourceName, glob)
+    local key = resourceName .. ":" .. glob
+    if not globCache[key] then
+        globCache[key] = resolveGlob(resourceName, glob)
+    end
+    return globCache[key]
+end
+
+
 function isScriptAllowed(scriptName)
     if (enableWhiteList) then
         for i, allowedScript in ipairs(whiteList) do
@@ -33,7 +94,7 @@ function isScriptAllowed(scriptName)
         end
         return false
     end
-    
+
     if (enableBlackList) then
         for i, blockedScript in ipairs(blackList) do
             if (blockedScript == scriptName) then
@@ -41,7 +102,7 @@ function isScriptAllowed(scriptName)
             end
         end
     end
-    
+
     return true
 end
 
@@ -99,21 +160,32 @@ end
 function getResourceFiles(resourceName)
     local resource = getResourceFromName(resourceName)
     if (not resource) then return nil end
-    
+
     local files = { clientFiles = {}, serverFiles = {} }
     local metaFile = xmlLoadFile(":" .. resourceName .. "/meta.xml")
     if (not metaFile) then return files end
-    
+
     for i, node in ipairs(xmlNodeGetChildren(metaFile)) do
         if (xmlNodeGetName(node) == "script") then
             local scriptPath = xmlNodeGetAttribute(node, "src")
             local scriptType = xmlNodeGetAttribute(node, "type") or "server"
-            
+
             if (scriptPath) then
-                if (scriptType == "client") then
-                    table.insert(files.clientFiles, scriptPath)
-                elseif (scriptType == "server") then
-                    table.insert(files.serverFiles, scriptPath)
+                if scriptPath:find("*") then
+                    local matchedFiles = resolveGlobCached(resourceName, scriptPath)
+                    for _, path in ipairs(matchedFiles) do
+                        if scriptType == "client" then
+                            table.insert(files.clientFiles, path)
+                        elseif scriptType == "server" then
+                            table.insert(files.serverFiles, path)
+                        end
+                    end
+                else
+                    if scriptType == "client" then
+                        table.insert(files.clientFiles, scriptPath)
+                    elseif scriptType == "server" then
+                        table.insert(files.serverFiles, scriptPath)
+                    end
                 end
             end
         end
@@ -130,21 +202,31 @@ function getDetailedResourceFiles(resourceName)
     local files = {}
     local metaFile = xmlLoadFile(":" .. resourceName .. "/meta.xml")
     if (not metaFile) then return files end
-    
+
     for i, node in ipairs(xmlNodeGetChildren(metaFile)) do
         if (xmlNodeGetName(node) == "script") then
             local scriptPath = xmlNodeGetAttribute(node, "src")
             local scriptType = xmlNodeGetAttribute(node, "type") or "server"
-            
+
             if (scriptPath) then
-                table.insert(files, {
-                    path = scriptPath,
-                    type = scriptType
-                })
+                if scriptPath:find("*") then
+                    local matchedFiles = resolveGlobCached(resourceName, scriptPath)
+                    for _, path in ipairs(matchedFiles) do
+                        table.insert(files, {
+                            path = path,
+                            type = scriptType
+                        })
+                    end
+                else
+                    table.insert(files, {
+                        path = scriptPath,
+                        type = scriptType
+                    })
+                end
             end
         end
     end
-    
+
     xmlUnloadFile(metaFile)
     return files
 end
