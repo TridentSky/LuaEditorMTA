@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------------------------
 --
 --  PROJECT:         Trident Sky Company
---  VERSION:         2.5
+--  VERSION:         2.6
 --  FILE:            editorC.lua
 --  PURPOSE:         Lua Code Editor Client-side Enhanced
 --  DEVELOPERS:      [BranD] - Lead Developer
@@ -156,8 +156,8 @@ function closePanel()
         isMinimized = false
     end
 end
-addEvent("closePanel", true)
-addEventHandler("closePanel", root, closePanel)
+addEvent("luaEditor.closePanel", true)
+addEventHandler("luaEditor.closePanel", root, closePanel)
 
 function minimizePanel()
     if (editorGui and guiGetVisible(editorGui)) then
@@ -166,8 +166,8 @@ function minimizePanel()
         isMinimized = true
     end
 end
-addEvent("minimizePanel", true)
-addEventHandler("minimizePanel", root, minimizePanel)
+addEvent("luaEditor.minimizePanel", true)
+addEventHandler("luaEditor.minimizePanel", root, minimizePanel)
 
 function restoreEditorPanel()
     if (editorGui and isMinimized) then
@@ -182,48 +182,48 @@ end
 function requestScriptsList()
     triggerServerEvent("luaEditor.requestScriptsList", localPlayer)
 end
-addEvent("requestScriptsList", true)
-addEventHandler("requestScriptsList", root, requestScriptsList)
+addEvent("luaEditor.requestScriptsList", true)
+addEventHandler("luaEditor.requestScriptsList", root, requestScriptsList)
 
 function requestScriptFiles(scriptName)
     if (scriptName and scriptName ~= "") then
         triggerServerEvent("luaEditor.requestScriptFiles", localPlayer, scriptName)
     end
 end
-addEvent("requestScriptFiles", true)
-addEventHandler("requestScriptFiles", root, requestScriptFiles)
+addEvent("luaEditor.requestScriptFiles", true)
+addEventHandler("luaEditor.requestScriptFiles", root, requestScriptFiles)
 
 function requestFileContent(scriptName, filePath)
     if (scriptName and filePath and scriptName ~= "" and filePath ~= "") then
         triggerServerEvent("luaEditor.requestFileContent", localPlayer, scriptName, filePath)
     end
 end
-addEvent("requestFileContent", true)
-addEventHandler("requestFileContent", root, requestFileContent)
+addEvent("luaEditor.requestFileContent", true)
+addEventHandler("luaEditor.requestFileContent", root, requestFileContent)
 
 function saveFileContent(scriptName, filePath, content)
     if (scriptName and filePath and content and scriptName ~= "" and filePath ~= "") then
         triggerServerEvent("luaEditor.saveFileContent", localPlayer, scriptName, filePath, content)
     end
 end
-addEvent("saveFileContent", true)
-addEventHandler("saveFileContent", root, saveFileContent)
+addEvent("luaEditor.saveFileContent", true)
+addEventHandler("luaEditor.saveFileContent", root, saveFileContent)
 
 function deleteFile(scriptName, filePath)
     if (scriptName and filePath and scriptName ~= "" and filePath ~= "") then
         triggerServerEvent("luaEditor.deleteFile", localPlayer, scriptName, filePath)
     end
 end
-addEvent("deleteFile", true)
-addEventHandler("deleteFile", root, deleteFile)
+addEvent("luaEditor.deleteFile", true)
+addEventHandler("luaEditor.deleteFile", root, deleteFile)
 
 function createFile(scriptName, fileName, fileType)
     if (scriptName and fileName and fileType and scriptName ~= "" and fileName ~= "") then
         triggerServerEvent("luaEditor.createFile", localPlayer, scriptName, fileName, fileType)
     end
 end
-addEvent("createFile", true)
-addEventHandler("createFile", root, createFile)
+addEvent("luaEditor.createFile", true)
+addEventHandler("luaEditor.createFile", root, createFile)
 
 function onScriptsListReceived(scripts)
     openEditorPanel(scripts)

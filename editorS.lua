@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------------------------
 --
 --  PROJECT:         Trident Sky Company
---  VERSION:         2.5
+--  VERSION:         2.6
 --  FILE:            editorS.lua
 --  PURPOSE:         Lua Code Editor Server-side Enhanced
 --  DEVELOPERS:      [BranD] - Lead Developer

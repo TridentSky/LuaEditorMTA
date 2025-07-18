@@ -1057,7 +1057,7 @@
             clearEditor();
             
             if (typeof mta !== 'undefined' && mta.triggerEvent) {
-                mta.triggerEvent("requestScriptFiles", scriptName);
+                mta.triggerEvent("luaEditor.requestScriptFiles", scriptName);
             }
         }
 
@@ -1168,7 +1168,7 @@
             }
             
             if (typeof mta !== 'undefined' && mta.triggerEvent) {
-                mta.triggerEvent("requestFileContent", currentScript, file.path);
+                mta.triggerEvent("luaEditor.requestFileContent", currentScript, file.path);
             }
         }
 
@@ -1308,7 +1308,7 @@
             const newContent = codeMirrorEditor.getValue();
             
             if (typeof mta !== 'undefined' && mta.triggerEvent) {
-                mta.triggerEvent("saveFileContent", currentScript, currentFile.path, newContent);
+                mta.triggerEvent("luaEditor.saveFileContent", currentScript, currentFile.path, newContent);
             }
             
             const btn = event.target;
@@ -1326,13 +1326,13 @@
 
         function minimizePanel() {
             if (typeof mta !== 'undefined' && mta.triggerEvent) {
-                mta.triggerEvent("minimizePanel");
+                mta.triggerEvent("luaEditor.minimizePanel");
             }
         }
 
         function closePanel() {
             if (typeof mta !== 'undefined' && mta.triggerEvent) {
-                mta.triggerEvent("closePanel");
+                mta.triggerEvent("luaEditor.closePanel");
             }
         }
 
@@ -1349,7 +1349,7 @@
 
         function confirmDelete() {
             if (fileToDelete && typeof mta !== 'undefined' && mta.triggerEvent) {
-                mta.triggerEvent("deleteFile", fileToDelete.script, fileToDelete.path);
+                mta.triggerEvent("luaEditor.deleteFile", fileToDelete.script, fileToDelete.path);
             }
             hideDeleteModal();
         }
@@ -1390,7 +1390,7 @@
             }
             
             if (typeof mta !== 'undefined' && mta.triggerEvent) {
-                mta.triggerEvent("createFile", currentScript, fileName, fileType);
+                mta.triggerEvent("luaEditor.createFile", currentScript, fileName, fileType);
             }
             
             hideCreateModal();
@@ -1409,21 +1409,21 @@
 
         function onFileDeleted(success, message) {
             if (success && currentScript && typeof mta !== 'undefined' && mta.triggerEvent) {
-                mta.triggerEvent("requestScriptFiles", currentScript);
+                mta.triggerEvent("luaEditor.requestScriptFiles", currentScript);
                 clearEditor();
                 
                 setTimeout(() => {
-                    mta.triggerEvent("requestScriptsList");
+                    mta.triggerEvent("luaEditor.requestScriptsList");
                 }, 500);
             }
         }
 
         function onFileCreated(success, message) {
             if (success && currentScript && typeof mta !== 'undefined' && mta.triggerEvent) {
-                mta.triggerEvent("requestScriptFiles", currentScript);
+                mta.triggerEvent("luaEditor.requestScriptFiles", currentScript);
                 
                 setTimeout(() => {
-                    mta.triggerEvent("requestScriptsList");
+                    mta.triggerEvent("luaEditor.requestScriptsList");
                 }, 500);
             }
         }
@@ -1451,7 +1451,7 @@
             
             if (typeof mta !== 'undefined' && mta.triggerEvent) {
                 setTimeout(() => {
-                    mta.triggerEvent("requestScriptsList");
+                    mta.triggerEvent("luaEditor.requestScriptsList");
                 }, 1000);
             }
         });

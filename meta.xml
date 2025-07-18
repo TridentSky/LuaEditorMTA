@@ -1,5 +1,5 @@
 <meta>
-    <info author="BranD" name="Lua Code Editor with CodeMirror" type="script" version="2.5" />
+    <info author="BranD" name="Lua Code Editor with CodeMirror" type="script" version="2.6" />
     <min_mta_version server="1.6" client="1.5.9" />
     
     <!-- Server-side script -->
