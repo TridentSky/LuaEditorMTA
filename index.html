@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lua Editor MTA:SA</title>
+    <link rel="stylesheet" href="CodeMirror/codemirror.min.css">
+    <link rel="stylesheet" href="CodeMirror/material-darker.min.css">
+    <script src="CodeMirror/codemirror.min.js"></script>
+    <script src="CodeMirror/lua.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            background: transparent;
+            color: #ffffff;
+            overflow: hidden;
+        }
+
+        .panel-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: min(1200px, 85vw);
+            height: min(750px, 80vh);
+            background: #2d2d2d;
+            border: 1px solid #4a4a4a;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+
+        .panel-header {
+            background: #3c3c3c;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #4a4a4a;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .panel-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .language-selector {
+            display: flex;
+            gap: 2px;
+        }
+
+        .lang-btn {
+            padding: 4px 8px;
+            background: #4a4a4a;
+            color: #ffffff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+
+        .lang-btn.active {
+            background: #4CAF50;
+            color: #000;
+        }
+
+        .lang-btn:hover {
+            background: #666;
+        }
+
+        .control-btn {
+            width: 20px;
+            height: 20px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+
+        .minimize-btn {
+            background: #ffbd2e;
+            color: #000;
+        }
+
+        .close-btn {
+            background: #ff5f56;
+            color: #fff;
+        }
+
+        .control-btn:hover {
+            opacity: 0.8;
+        }
+
+        .panel-content {
+            flex: 1;
+            display: flex;
+            height: calc(100% - 50px);
+        }
+
+        .sidebar {
+            width: 220px;
+            background: #252525;
+            border-right: 1px solid #4a4a4a;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-section {
+            padding: 10px;
+            border-bottom: 1px solid #4a4a4a;
+        }
+
+        .sidebar-section h3 {
+            font-size: 11px;
+            color: #cccccc;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 8px;
+        }
+
+        .script-search {
+            width: 100%;
+            padding: 6px 8px;
+            background: #3c3c3c;
+            border: 1px solid #4a4a4a;
+            border-radius: 4px;
+            color: #ffffff;
+            font-size: 11px;
+        }
+
+        .script-list {
+            max-height: 120px;
+            overflow-y: auto;
+            border: 1px solid #4a4a4a;
+            border-radius: 4px;
+            background: #3c3c3c;
+        }
+
+        .script-item {
+            padding: 6px 8px;
+            cursor: pointer;
+            font-size: 11px;
+            color: #ffffff;
+            border-bottom: 1px solid #4a4a4a;
+            transition: background 0.2s ease;
+        }
+
+        .script-item:last-child {
+            border-bottom: none;
+        }
+
+        .script-item:hover {
+            background: #4a4a4a;
+        }
+
+        .script-item.selected {
+            background: #4CAF50;
+            color: #000;
+        }
+
+        .loading-message {
+            padding: 12px 8px;
+            text-align: center;
+            font-size: 11px;
+            color: #cccccc;
+            font-style: italic;
+        }
+
+        .script-info {
+            margin-top: 8px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3px;
+            font-size: 10px;
+        }
+
+        .info-label {
+            color: #cccccc;
+        }
+
+        .info-value {
+            color: #ffffff;
+        }
+
+        .file-tree {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .file-tree h3 {
+            font-size: 11px;
+            color: #cccccc;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .create-file-section {
+            background: #333;
+            border: 1px solid #4a4a4a;
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+
+        .create-file-title {
+            font-size: 10px;
+            color: #4CAF50;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        .create-file-btn {
+            width: 100%;
+            padding: 5px 8px;
+            background: #4CAF50;
+            color: #000;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+
+        .create-file-btn:hover {
+            background: #45a049;
+        }
+
+        .file-list-container {
+            flex: 1;
+        }
+
+        .file-item {
+            padding: 5px 0;
+            cursor: pointer;
+            font-size: 12px;
+            color: #ffffff;
+            transition: color 0.2s ease;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-item:hover {
+            color: #4CAF50;
+        }
+
+        .file-item.client {
+            color: #4CAF50;
+        }
+
+        .file-item.server {
+            color: #FF9800;
+        }
+
+        .file-item.shared {
+            color: #2196F3;
+        }
+
+        .file-item.meta {
+            color: #9C27B0;
+            font-style: italic;
+        }
+
+        .file-item.compiled {
+            color: #9E9E9E;
+            font-style: italic;
+        }
+
+        .file-item.active {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .file-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .delete-btn {
+            width: 16px;
+            height: 16px;
+            background: #ff5f56;
+            color: #fff;
+            border: none;
+            border-radius: 2px;
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: bold;
+            margin-left: 5px;
+            transition: all 0.2s ease;
+            opacity: 0;
+        }
+
+        .file-item:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .delete-btn:hover {
+            background: #ff3b30;
+        }
+
+        .no-selection {
+            padding: 12px 0;
+            text-align: center;
+            font-size: 11px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .copyright {
+            margin-top: auto;
+            text-align: center;
+            font-size: 9px;
+            color: #666;
+            padding: 10px 0;
+            border-top: 1px solid #3a3a3a;
+        }
+
+        .copyright .brand {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .copyright .company {
+            color: #2196F3;
+        }
+
+        .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .editor-tabs {
+            background: #3c3c3c;
+            padding: 8px 15px;
+            border-bottom: 1px solid #4a4a4a;
+            display: flex;
+            gap: 10px;
+        }
+
+        .tab {
+            padding: 5px 12px;
+            background: #252525;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .tab.active {
+            background: #4CAF50;
+            color: #000;
+        }
+
+        .tab.compiled {
+            background: #9E9E9E;
+            color: #000;
+        }
+
+        .tab.meta {
+            background: #9C27B0;
+            color: #fff;
+        }
+
+        .editor-wrapper {
+            flex: 1;
+            position: relative;
+            background: #1e1e1e;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+        }
+
+        .code-editor-container {
+            width: 100%;
+            height: 100%;
+            background: #1e1e1e;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .CodeMirror {
+            height: 100% !important;
+            width: 100% !important;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
+            font-size: 14px !important;
+            background: #1e1e1e !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+        }
+
+        .CodeMirror-scroll {
+            height: 100% !important;
+            width: 100% !important;
+            overflow: auto !important;
+        }
+
+        .CodeMirror-sizer {
+            min-height: 100% !important;
+        }
+
+        .CodeMirror-gutters {
+            background: #2d2d2d !important;
+            border-right: 1px solid #4a4a4a !important;
+        }
+
+        .CodeMirror-linenumber {
+            color: #666 !important;
+        }
+
+        .editor-footer {
+            background: #3c3c3c;
+            padding: 8px 15px;
+            border-top: 1px solid #4a4a4a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            position: relative;
+        }
+
+        .notification {
+            position: absolute;
+            top: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ff5f56;
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .notification.show {
+            opacity: 1;
+            top: -40px;
+        }
+
+        .notification.success {
+            background: #4CAF50;
+            color: #000;
+        }
+
+        .notification.warning {
+            background: #FF9800;
+            color: #000;
+        }
+
+        .status-info {
+            color: #cccccc;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            background: #4CAF50;
+            color: #000;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background: #45a049;
+        }
+
+        .action-btn:disabled {
+            background: #4a4a4a;
+            color: #888;
+            cursor: not-allowed;
+        }
+
+        .action-btn.secondary {
+            background: #2196F3;
+            color: #fff;
+        }
+
+        .action-btn.secondary:hover {
+            background: #1976D2;
+        }
+
+        .minimized {
+            height: 50px;
+            overflow: hidden;
+        }
+
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #2d2d2d;
+            border: 1px solid #4a4a4a;
+            border-radius: 8px;
+            padding: 20px;
+            z-index: 2000;
+            min-width: 300px;
+            max-width: 400px;
+        }
+
+        .modal-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #ffffff;
+        }
+
+        .modal-content {
+            margin-bottom: 20px;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 8px;
+            background: #3c3c3c;
+            border: 1px solid #4a4a4a;
+            border-radius: 4px;
+            color: #ffffff;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        .modal-select {
+            width: 100%;
+            padding: 8px;
+            background: #3c3c3c;
+            border: 1px solid #4a4a4a;
+            border-radius: 4px;
+            color: #ffffff;
+            font-size: 12px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+
+        .modal-btn.confirm {
+            background: #4CAF50;
+            color: #000;
+        }
+
+        .modal-btn.confirm:hover {
+            background: #45a049;
+        }
+
+        .modal-btn.cancel {
+            background: #ff5f56;
+            color: #fff;
+        }
+
+        .modal-btn.cancel:hover {
+            background: #ff3b30;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #2d2d2d;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #4a4a4a;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="panel-container" id="panel">
+        <div class="panel-header">
+            <div class="panel-title" data-lang="title">Lua Editor MTA:SA</div>
+            <div class="panel-controls">
+                <div class="language-selector">
+                    <button class="lang-btn active" onclick="changeLanguage('en')">EN</button>
+                    <button class="lang-btn" onclick="changeLanguage('pt')">PT</button>
+                    <button class="lang-btn" onclick="changeLanguage('es')">ES</button>
+                    <button class="lang-btn" onclick="changeLanguage('tr')">TR</button>
+                    <button class="lang-btn" onclick="changeLanguage('ar')">AR</button>
+                </div>
+                <button class="control-btn minimize-btn" onclick="minimizePanel()">_</button>
+                <button class="control-btn close-btn" onclick="closePanel()">×</button>
+            </div>
+        </div>
+        
+        <div class="panel-content">
+            <div class="sidebar">
+                <div class="sidebar-section">
+                    <h3 data-lang="scripts">Scripts</h3>
+                    <div class="search-container">
+                        <input type="text" class="script-search" id="scriptSearch" data-lang-placeholder="search_script" placeholder="Search script..." oninput="filterScripts()">
+                    </div>
+                    <div class="script-list" id="scriptList">
+                        <div class="loading-message" data-lang="loading">Loading scripts...</div>
+                    </div>
+                    
+                    <div class="script-info" id="scriptInfo">
+                        <div class="info-item">
+                            <span class="info-label" data-lang="files">Files:</span>
+                            <span class="info-value">0</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Client:</span>
+                            <span class="info-value">0</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Server:</span>
+                            <span class="info-value">0</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Shared:</span>
+                            <span class="info-value">0</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label" data-lang="size">Size:</span>
+                            <span class="info-value">0 KB</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="file-tree" id="fileTree">
+                    <h3 data-lang="files">Files</h3>
+                    
+                    <div class="create-file-section">
+                        <div class="create-file-title" data-lang="create_file">Create New File</div>
+                        <button class="create-file-btn" onclick="showCreateFileModal()" data-lang="create_btn">+ Create File</button>
+                    </div>
+                    
+                    <div class="file-list-container">
+                        <div id="fileList">
+                            <div class="no-selection" data-lang="no_selection">Select a script from the list</div>
+                        </div>
+                    </div>
+                    
+                    <div class="copyright">
+                        <div>© 2025 <span class="brand">BranD</span></div>
+                        <div><span class="company">Trident Sky</span></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="editor-container">
+                <div class="editor-tabs" id="editorTabs">
+                    <div class="tab">
+                        <span data-lang="no_file_selected">No file selected</span>
+                    </div>
+                </div>
+                
+                <div class="editor-wrapper">
+                    <div class="code-editor-container">
+                        <textarea id="codeEditor"></textarea>
+                    </div>
+                </div>
+                
+                <div class="editor-footer">
+                    <div id="notification" class="notification"></div>
+                    <div class="status-info">
+                        <span data-lang="lines">Lines</span>: <span id="lineCount">1</span>
+                        <span style="margin-left: 15px;" data-lang="characters">Characters</span>: <span id="charCount">0</span>
+                        <span style="margin-left: 15px;" id="fileStatus"></span>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="action-btn secondary" onclick="copyCode()" data-lang="copy">Copy</button>
+                        <button class="action-btn" onclick="sendCode()" data-lang="send" disabled>Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="deleteModal" class="modal hidden">
+        <div class="modal-title" data-lang="confirm_delete">Confirm Delete</div>
+        <div class="modal-content">
+            <p data-lang="delete_warning">Are you sure you want to delete this file?</p>
+            <p id="deleteFileName" style="color: #ff5f56; font-weight: bold; margin-top: 10px;"></p>
+        </div>
+        <div class="modal-buttons">
+            <button class="modal-btn cancel" onclick="hideDeleteModal()" data-lang="cancel">Cancel</button>
+            <button class="modal-btn confirm" onclick="confirmDelete()" data-lang="delete">Delete</button>
+        </div>
+    </div>
+
+    <div id="createModal" class="modal hidden">
+        <div class="modal-title" data-lang="create_new_file">Create New File</div>
+        <div class="modal-content">
+            <p style="color: #cccccc; font-size: 11px; margin-bottom: 10px;">
+                <span data-lang="script_target">Script:</span> <span id="targetScript" style="color: #4CAF50; font-weight: bold;"></span>
+            </p>
+            <input type="text" id="newFileName" class="modal-input" data-lang-placeholder="file_name" placeholder="File name (without .lua)">
+            <div class="file-type-options">
+                <label class="radio-option">
+                    <input type="radio" name="fileType" value="server" checked>
+                    <span class="radio-text">Server</span>
+                </label>
+                <label class="radio-option">
+                    <input type="radio" name="fileType" value="client">
+                    <span class="radio-text">Client</span>
+                </label>
+                <label class="radio-option">
+                    <input type="radio" name="fileType" value="shared">
+                    <span class="radio-text">Shared</span>
+                </label>
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button class="modal-btn cancel" onclick="hideCreateModal()" data-lang="cancel">Cancel</button>
+            <button class="modal-btn confirm" onclick="confirmCreate()" data-lang="create">Create</button>
+        </div>
+    </div>
+
+    <script>
+        const languages = {
+            es: {
+                title: "Editor Lua MTA:SA",
+                scripts: "Scripts",
+                files: "Archivos",
+                size: "Tamaño",
+                search_script: "Buscar script...",
+                lines: "Líneas",
+                characters: "Caracteres",
+                copy: "Copiar",
+                send: "Enviar",
+                copied: "¡Copiado!",
+                sent: "¡Enviado!",
+                code_placeholder: "Selecciona un archivo para empezar a editar...",
+                no_selection: "Selecciona un script de la lista",
+                no_file_selected: "Ningún archivo seleccionado",
+                loading: "Cargando scripts...",
+                loading_files: "Cargando archivos...",
+                compiled_file: "Archivo compilado (solo lectura)",
+                error_loading: "Error al cargar",
+                create_file: "Crear Nuevo Archivo",
+                create_btn: "+ Crear Archivo",
+                confirm_delete: "Confirmar Eliminación",
+                delete_warning: "¿Estás seguro de que quieres eliminar este archivo?",
+                cancel: "Cancelar",
+                delete: "Eliminar",
+                create_new_file: "Crear Nuevo Archivo",
+                file_name: "Nombre del archivo (sin .lua)",
+                create: "Crear",
+                script_target: "Script",
+                select_script_first: "Selecciona un script primero",
+                enter_file_name: "Ingresa un nombre de archivo"
+            },
+            pt: {
+                title: "Editor Lua MTA:SA",
+                scripts: "Scripts",
+                files: "Arquivos",
+                size: "Tamanho",
+                search_script: "Pesquisar script...",
+                lines: "Linhas",
+                characters: "Caracteres",
+                copy: "Copiar",
+                send: "Enviar",
+                copied: "Copiado!",
+                sent: "Enviado!",
+                code_placeholder: "Selecione um arquivo para começar a editar...",
+                no_selection: "Selecione um script da lista",
+                no_file_selected: "Nenhum arquivo selecionado",
+                loading: "Carregando scripts...",
+                loading_files: "Carregando arquivos...",
+                compiled_file: "Arquivo compilado (somente leitura)",
+                error_loading: "Erro ao carregar",
+                create_file: "Criar Novo Arquivo",
+                create_btn: "+ Criar Arquivo",
+                confirm_delete: "Confirmar Exclusão",
+                delete_warning: "Tem certeza de que deseja excluir este arquivo?",
+                cancel: "Cancelar",
+                delete: "Excluir",
+                create_new_file: "Criar Novo Arquivo",
+                file_name: "Nome do arquivo (sem .lua)",
+                create: "Criar",
+                script_target: "Script",
+                select_script_first: "Selecione um script primeiro",
+                enter_file_name: "Digite um nome de arquivo"
+            },
+            en: {
+                title: "Lua Editor MTA:SA",
+                scripts: "Scripts",
+                files: "Files",
+                size: "Size",
+                search_script: "Search script...",
+                lines: "Lines",
+                characters: "Characters",
+                copy: "Copy",
+                send: "Send",
+                copied: "Copied!",
+                sent: "Sent!",
+                code_placeholder: "Select a file to start editing...",
+                no_selection: "Select a script from the list",
+                no_file_selected: "No file selected",
+                loading: "Loading scripts...",
+                loading_files: "Loading files...",
+                compiled_file: "Compiled file (read-only)",
+                error_loading: "Error loading",
+                create_file: "Create New File",
+                create_btn: "+ Create File",
+                confirm_delete: "Confirm Delete",
+                delete_warning: "Are you sure you want to delete this file?",
+                cancel: "Cancel",
+                delete: "Delete",
+                create_new_file: "Create New File",
+                file_name: "File name (without .lua)",
+                create: "Create",
+                script_target: "Script",
+                select_script_first: "Please select a script first",
+                enter_file_name: "Please enter a file name"
+            },
+            tr: {
+                title: "Lua Editörü MTA:SA",
+                scripts: "Scriptler",
+                files: "Dosyalar",
+                size: "Boyut",
+                search_script: "Script ara...",
+                lines: "Satırlar",
+                characters: "Karakterler",
+                copy: "Kopyala",
+                send: "Gönder",
+                copied: "Kopyalandı!",
+                sent: "Gönderildi!",
+                code_placeholder: "Düzenlemek için bir dosya seçin...",
+                no_selection: "Listeden bir script seçin",
+                no_file_selected: "Dosya seçilmedi",
+                loading: "Scriptler yükleniyor...",
+                loading_files: "Dosyalar yükleniyor...",
+                compiled_file: "Derlenmiş dosya (salt okunur)",
+                error_loading: "Yükleme hatası",
+                create_file: "Yeni Dosya Oluştur",
+                create_btn: "+ Dosya Oluştur",
+                confirm_delete: "Silmeyi Onayla",
+                delete_warning: "Bu dosyayı silmek istediğinizden emin misiniz?",
+                cancel: "İptal",
+                delete: "Sil",
+                create_new_file: "Yeni Dosya Oluştur",
+                file_name: "Dosya adı (.lua olmadan)",
+                create: "Oluştur",
+                script_target: "Script",
+                select_script_first: "Lütfen önce bir script seçin",
+                enter_file_name: "Lütfen bir dosya adı girin"
+            },
+            ar: {
+                title: "محرر لوا MTA:SA",
+                scripts: "السكريبتات",
+                files: "الملفات",
+                size: "الحجم",
+                search_script: "البحث عن سكريبت...",
+                lines: "الأسطر",
+                characters: "الأحرف",
+                copy: "نسخ",
+                send: "إرسال",
+                copied: "تم النسخ!",
+                sent: "تم الإرسال!",
+                code_placeholder: "اختر ملفاً لبدء التعديل...",
+                no_selection: "اختر سكريبت من القائمة",
+                no_file_selected: "لم يتم اختيار ملف",
+                loading: "جاري تحميل السكريبتات...",
+                loading_files: "جاري تحميل الملفات...",
+                compiled_file: "ملف مترجم (للقراءة فقط)",
+                error_loading: "خطأ في التحميل",
+                create_file: "إنشاء ملف جديد",
+                create_btn: "+ إنشاء ملف",
+                confirm_delete: "تأكيد الحذف",
+                delete_warning: "هل أنت متأكد من أنك تريد حذف هذا الملف؟",
+                cancel: "إلغاء",
+                delete: "حذف",
+                create_new_file: "إنشاء ملف جديد",
+                file_name: "اسم الملف (بدون .lua)",
+                create: "إنشاء",
+                script_target: "سكريبت",
+                select_script_first: "يرجى اختيار سكريبت أولاً",
+                enter_file_name: "يرجى إدخال اسم الملف"
+            }
+        };
+
+        let currentLanguage = 'en';
+        let scriptsData = [];
+        let filteredScripts = [];
+        let currentScript = null;
+        let currentFile = null;
+        let originalCode = '';
+        let isModified = false;
+        let codeMirrorEditor = null;
+        let fileToDelete = null;
+
+        function initCodeMirror() {
+            const textarea = document.getElementById('codeEditor');
+            codeMirrorEditor = CodeMirror.fromTextArea(textarea, {
+                mode: 'lua',
+                theme: 'material-darker',
+                lineNumbers: true,
+                indentUnit: 4,
+                tabSize: 4,
+                indentWithTabs: true,
+                lineWrapping: true,
+                matchBrackets: true,
+                autoCloseBrackets: true,
+                foldGutter: true,
+                gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+                readOnly: true
+            });
+
+            codeMirrorEditor.on('change', function() {
+                onEditorInput();
+            });
+
+            setTimeout(() => {
+                codeMirrorEditor.refresh();
+            }, 100);
+        }
+
+        function changeLanguage(lang) {
+            currentLanguage = lang;
+            
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            document.querySelectorAll('[data-lang]').forEach(element => {
+                const key = element.getAttribute('data-lang');
+                if (languages[lang][key]) {
+                    element.textContent = languages[lang][key];
+                }
+            });
+            
+            document.querySelectorAll('[data-lang-placeholder]').forEach(element => {
+                const key = element.getAttribute('data-lang-placeholder');
+                if (languages[lang][key]) {
+                    element.placeholder = languages[lang][key];
+                }
+            });
+            
+            updateFileStatus();
+        }
+
+        function loadScriptsList(scripts) {
+            scriptsData = scripts || [];
+            filteredScripts = [...scriptsData];
+            renderScriptsList();
+        }
+
+        function renderScriptsList() {
+            const scriptList = document.getElementById('scriptList');
+            scriptList.innerHTML = '';
+            
+            if (filteredScripts.length === 0) {
+                const loadingMsg = document.createElement('div');
+                loadingMsg.className = 'loading-message';
+                loadingMsg.setAttribute('data-lang', 'loading');
+                loadingMsg.textContent = languages[currentLanguage]['loading'];
+                scriptList.appendChild(loadingMsg);
+                return;
+            }
+            
+            filteredScripts.forEach((script, index) => {
+                const scriptItem = document.createElement('div');
+                scriptItem.className = 'script-item';
+                scriptItem.textContent = script.name;
+                scriptItem.onclick = () => selectScript(script.name, index);
+                scriptList.appendChild(scriptItem);
+            });
+        }
+
+        function filterScripts() {
+            const searchTerm = document.getElementById('scriptSearch').value.toLowerCase();
+            filteredScripts = scriptsData.filter(script => 
+                script.name.toLowerCase().includes(searchTerm)
+            );
+            renderScriptsList();
+        }
+
+        function selectScript(scriptName, index) {
+            document.querySelectorAll('.script-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            event.target.classList.add('selected');
+            currentScript = scriptName;
+            
+            updateScriptInfo(filteredScripts[index]);
+            clearEditor();
+            
+            if (typeof mta !== 'undefined' && mta.triggerEvent) {
+                mta.triggerEvent("requestScriptFiles", scriptName);
+            }
+        }
+
+        function updateScriptInfo(script) {
+            if (!script) return;
+            
+            const clientFiles = script.clientFiles ? script.clientFiles.length : 0;
+            const serverFiles = script.serverFiles ? script.serverFiles.length : 0;
+            const sharedFiles = script.sharedFiles ? script.sharedFiles.length : 0;
+            const totalFiles = clientFiles + serverFiles + sharedFiles;
+            const totalSize = Math.round((totalFiles * 15.5) * 100) / 100;
+            
+            document.getElementById('scriptInfo').innerHTML = `
+                <div class="info-item">
+                    <span class="info-label" data-lang="files">${languages[currentLanguage]['files']}:</span>
+                    <span class="info-value">${totalFiles}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Client:</span>
+                    <span class="info-value">${clientFiles}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Server:</span>
+                    <span class="info-value">${serverFiles}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Shared:</span>
+                    <span class="info-value">${sharedFiles}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label" data-lang="size">${languages[currentLanguage]['size']}:</span>
+                    <span class="info-value">${totalSize} KB</span>
+                </div>
+            `;
+        }
+
+        function loadScriptFiles(scriptName, files) {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '';
+            
+            if (!files || files.length === 0) {
+                const noFiles = document.createElement('div');
+                noFiles.className = 'no-selection';
+                noFiles.setAttribute('data-lang', 'no_selection');
+                noFiles.textContent = languages[currentLanguage]['no_selection'];
+                fileList.appendChild(noFiles);
+                return;
+            }
+            
+            files.forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = `file-item ${file.type}`;
+                
+                if (file.compiled) {
+                    fileItem.classList.add('compiled');
+                }
+                
+                const fileName = document.createElement('div');
+                fileName.className = 'file-name';
+                fileName.textContent = file.path;
+                fileName.title = file.path;
+                fileName.onclick = () => selectFile(file);
+                
+                fileItem.appendChild(fileName);
+                
+                if (file.type !== 'meta') {
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'delete-btn';
+                    deleteBtn.innerHTML = '×';
+                    deleteBtn.title = 'Delete file';
+                    deleteBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        showDeleteModal(scriptName, file.path);
+                    };
+                    fileItem.appendChild(deleteBtn);
+                }
+                
+                fileList.appendChild(fileItem);
+            });
+        }
+
+        function selectFile(file) {
+            document.querySelectorAll('.file-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            event.target.closest('.file-item').classList.add('active');
+            currentFile = file;
+            
+            if (file.compiled) {
+                loadCompiledFile(file);
+            } else {
+                loadEditableFile(file);
+            }
+            
+            updateEditorTabs();
+            updateFileStatus();
+        }
+
+        function loadEditableFile(file) {
+            if (codeMirrorEditor) {
+                codeMirrorEditor.setValue('');
+                codeMirrorEditor.setOption('readOnly', true);
+                
+                originalCode = '';
+                isModified = false;
+                updateFileStatus();
+            }
+            
+            if (typeof mta !== 'undefined' && mta.triggerEvent) {
+                mta.triggerEvent("requestFileContent", currentScript, file.path);
+            }
+        }
+
+        function loadCompiledFile(file) {
+            const compiledContent = "-- This file is compiled and cannot be edited\n-- File: " + file.path;
+            
+            if (codeMirrorEditor) {
+                codeMirrorEditor.setValue(compiledContent);
+                codeMirrorEditor.setOption('readOnly', true);
+            }
+            
+            originalCode = compiledContent;
+            isModified = false;
+            updateCharCount();
+            updateButtons();
+            updateFileStatus();
+        }
+
+        function updateEditorTabs() {
+            const tabs = document.getElementById('editorTabs');
+            
+            if (!currentFile) {
+                tabs.innerHTML = `
+                    <div class="tab">
+                        <span data-lang="no_file_selected">${languages[currentLanguage]['no_file_selected']}</span>
+                    </div>
+                `;
+                return;
+            }
+            
+            const fileName = currentFile.path.split('/').pop();
+            let tabClass = 'tab';
+            
+            if (currentFile.compiled) {
+                tabClass += ' compiled';
+            } else if (currentFile.type === 'meta') {
+                tabClass += ' meta';
+            } else {
+                tabClass += ' active';
+            }
+            
+            tabs.innerHTML = `
+                <div class="${tabClass}" title="${currentFile.path}">
+                    ${fileName}
+                </div>
+            `;
+        }
+
+        function updateFileStatus() {
+            const statusEl = document.getElementById('fileStatus');
+            
+            if (!currentFile) {
+                statusEl.textContent = '';
+                return;
+            }
+            
+            if (currentFile.compiled) {
+                statusEl.textContent = languages[currentLanguage]['compiled_file'];
+                statusEl.style.color = '#9E9E9E';
+            } else {
+                const currentCode = codeMirrorEditor ? codeMirrorEditor.getValue() : '';
+                
+                if (currentCode !== originalCode) {
+                    statusEl.textContent = '● Modified';
+                    statusEl.style.color = '#FF9800';
+                } else {
+                    statusEl.textContent = '✓ Synchronized';
+                    statusEl.style.color = '#4CAF50';
+                }
+            }
+        }
+
+        function clearEditor() {
+            if (codeMirrorEditor) {
+                codeMirrorEditor.setValue('');
+                codeMirrorEditor.setOption('readOnly', true);
+            }
+            
+            currentFile = null;
+            originalCode = '';
+            isModified = false;
+            
+            updateEditorTabs();
+            updateCharCount();
+            updateButtons();
+            updateFileStatus();
+        }
+
+        function updateCharCount() {
+            if (codeMirrorEditor) {
+                const content = codeMirrorEditor.getValue();
+                const lines = content.split('\n');
+                document.getElementById('lineCount').textContent = lines.length;
+                document.getElementById('charCount').textContent = content.length;
+            }
+        }
+
+        function updateButtons() {
+            const sendBtn = document.querySelector('[data-lang="send"]');
+            
+            const canEdit = currentFile && !currentFile.compiled;
+            const currentCode = codeMirrorEditor ? codeMirrorEditor.getValue() : '';
+            
+            sendBtn.disabled = !canEdit || currentCode === originalCode;
+        }
+
+        function onEditorInput() {
+            if (!currentFile || currentFile.compiled) return;
+            
+            if (codeMirrorEditor && !codeMirrorEditor.getOption('readOnly')) {
+                const currentCode = codeMirrorEditor.getValue();
+                isModified = currentCode !== originalCode;
+                
+                updateCharCount();
+                updateButtons();
+                updateFileStatus();
+            }
+        }
+
+        function copyCode() {
+            if (codeMirrorEditor) {
+                const content = codeMirrorEditor.getValue();
+                navigator.clipboard.writeText(content).then(() => {
+                    const btn = event.target;
+                    const originalText = btn.textContent;
+                    btn.textContent = languages[currentLanguage]['copied'];
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                    }, 1000);
+                });
+            }
+        }
+
+        function sendCode() {
+            if (!currentFile || currentFile.compiled || !codeMirrorEditor) return;
+            
+            const newContent = codeMirrorEditor.getValue();
+            
+            if (typeof mta !== 'undefined' && mta.triggerEvent) {
+                mta.triggerEvent("saveFileContent", currentScript, currentFile.path, newContent);
+            }
+            
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = languages[currentLanguage]['sent'];
+            setTimeout(() => {
+                btn.textContent = originalText;
+            }, 1000);
+            
+            originalCode = newContent;
+            isModified = false;
+            updateButtons();
+            updateFileStatus();
+        }
+
+        function minimizePanel() {
+            if (typeof mta !== 'undefined' && mta.triggerEvent) {
+                mta.triggerEvent("minimizePanel");
+            }
+        }
+
+        function closePanel() {
+            if (typeof mta !== 'undefined' && mta.triggerEvent) {
+                mta.triggerEvent("closePanel");
+            }
+        }
+
+        function showDeleteModal(scriptName, filePath) {
+            fileToDelete = { script: scriptName, path: filePath };
+            document.getElementById('deleteFileName').textContent = scriptName + '/' + filePath;
+            document.getElementById('deleteModal').classList.remove('hidden');
+        }
+
+        function hideDeleteModal() {
+            document.getElementById('deleteModal').classList.add('hidden');
+            fileToDelete = null;
+        }
+
+        function confirmDelete() {
+            if (fileToDelete && typeof mta !== 'undefined' && mta.triggerEvent) {
+                mta.triggerEvent("deleteFile", fileToDelete.script, fileToDelete.path);
+            }
+            hideDeleteModal();
+        }
+
+        function showNotification(message, type = 'error') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        function showCreateFileModal() {
+            if (!currentScript) {
+                showNotification(languages[currentLanguage]['select_script_first'], 'warning');
+                return;
+            }
+            document.getElementById('newFileName').value = '';
+            document.querySelector('input[name="fileType"][value="server"]').checked = true;
+            document.getElementById('targetScript').textContent = currentScript;
+            document.getElementById('createModal').classList.remove('hidden');
+        }
+
+        function hideCreateModal() {
+            document.getElementById('createModal').classList.add('hidden');
+        }
+
+        function confirmCreate() {
+            const fileName = document.getElementById('newFileName').value.trim();
+            const fileType = document.querySelector('input[name="fileType"]:checked').value;
+            
+            if (!fileName) {
+                showNotification(languages[currentLanguage]['enter_file_name'], 'warning');
+                return;
+            }
+            
+            if (typeof mta !== 'undefined' && mta.triggerEvent) {
+                mta.triggerEvent("createFile", currentScript, fileName, fileType);
+            }
+            
+            hideCreateModal();
+        }
+
+        function onFileSaved(success, message) {
+            if (success && codeMirrorEditor) {
+                originalCode = codeMirrorEditor.getValue();
+                isModified = false;
+                updateButtons();
+                updateFileStatus();
+            } else {
+                updateButtons();
+            }
+        }
+
+        function onFileDeleted(success, message) {
+            if (success && currentScript && typeof mta !== 'undefined' && mta.triggerEvent) {
+                mta.triggerEvent("requestScriptFiles", currentScript);
+                clearEditor();
+                
+                setTimeout(() => {
+                    mta.triggerEvent("requestScriptsList");
+                }, 500);
+            }
+        }
+
+        function onFileCreated(success, message) {
+            if (success && currentScript && typeof mta !== 'undefined' && mta.triggerEvent) {
+                mta.triggerEvent("requestScriptFiles", currentScript);
+                
+                setTimeout(() => {
+                    mta.triggerEvent("requestScriptsList");
+                }, 500);
+            }
+        }
+
+        function receiveFileContent(content) {
+            if (codeMirrorEditor) {
+                codeMirrorEditor.setValue(content || '');
+                codeMirrorEditor.setOption('readOnly', currentFile && currentFile.compiled);
+                
+                setTimeout(() => {
+                    codeMirrorEditor.refresh();
+                }, 100);
+                
+                originalCode = content || '';
+                isModified = false;
+                updateCharCount();
+                updateButtons();
+                updateFileStatus();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initCodeMirror();
+            updateCharCount();
+            
+            if (typeof mta !== 'undefined' && mta.triggerEvent) {
+                setTimeout(() => {
+                    mta.triggerEvent("requestScriptsList");
+                }, 1000);
+            }
+        });
+    </script>
+</body>
+</html>

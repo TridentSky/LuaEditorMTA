@@ -1,0 +1,19 @@
+<meta>
+    <info author="BranD" name="Lua Code Editor with CodeMirror" type="script" version="2.5" />
+    <min_mta_version server="1.6" client="1.5.9" />
+    
+    <!-- Server-side script -->
+    <script src="editorS.lua" type="server" />
+    
+    <!-- Client-side script -->
+    <script src="editorC.lua" type="client" />
+    
+    <!-- Main interface -->
+    <file src="index.html" />
+    
+    <!-- CodeMirror files -->
+    <file src="CodeMirror/codemirror.min.js" />
+    <file src="CodeMirror/codemirror.min.css" />
+    <file src="CodeMirror/lua.min.js" />
+    <file src="CodeMirror/material-darker.min.css" />
+</meta>
