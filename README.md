@@ -1,37 +1,51 @@
-Hey MTA community! I'm releasing a complete Lua code editor that runs directly inside MTA:SA. Edit your server scripts in real-time without leaving the game or dealing with FTP uploads.
+FORUM: https://forum.multitheftauto.com/topic/146355-professional-in-game-lua-editor-free-release/
+VIDEO DEMO: https://youtu.be/MY4giM9jpps
 
-This is a full development environment with professional features, not just a basic text editor. I've been using it for months and it's completely changed how I develop servers.
+In-Game Lua Editor for MTA:SA - Enhanced Release
+
+Hey MTA community! Updated version of the complete Lua code editor that runs directly inside MTA:SA. Edit your server scripts in real-time without leaving the game or dealing with FTP uploads.
+
+This is a full development environment with professional features, not just a basic text editor. Complete resource management system included.
 
 Key Features:
+- Command: /editor to open the editor
+- CodeMirror syntax highlighting Visual Studio Code quality
+- Real-time file editing and saving
+- Resource browser with search functionality
+- Multi-language interface: English, Spanish, Portuguese, Turkish and Arabic
+- Dark professional theme
+- Whitelist/Blacklist security system
+- Admin ACL permission controls
+- Completely offline no external dependencies
+- Instant server updates without restarts
 
-CodeMirror syntax highlighting (Visual Studio Code quality)
-Word wrap support for clean code viewing
-Real-time file editing and saving
-Resource browser with search functionality
-Multi-language interface (English, Spanish, Portuguese, Turkish)
-Dark professional theme
-Whitelist/Blacklist security system
-Admin ACL permission controls
-Completely offline (no external dependencies)
-Instant server updates without restarts
-- To open the editor, use the command /editor.
-What it does: Browse all your server resources, view client/server files, and modify code with proper syntax highlighting. Changes save directly to your server files instantly.
+NEW Resource Management Features:
+- Create new files directly in editor (client/server/shared)
+- Delete files with confirmation dialogs
+- Full meta.xml editing support
+- Auto meta.xml updates when creating/deleting files
+- Visual file indicators with color coding
+- Enhanced security controls
+- In-panel notification system
+
+What it does:
+Browse all your server resources, create new scripts, delete unwanted files, edit meta.xml configurations, and modify code with proper syntax highlighting. Complete development workflow from within the game.
 
 Requirements:
+- IMPORTANT: Add "Admin" ACL permissions to the resource
+- Configure your admin group in permissionACL variable
+- Set up whitelist/blacklist for resource access control
+- Make sure your account has admin ACL permissions to access the editor
 
-Admin ACL permissions (configure your admin group)
-Set up whitelist/blacklist for resource access control
-Why I'm sharing this: I believe in giving back to the MTA community. This tool has saved me countless hours of development time, and I want everyone to benefit from it.
+Installation:
+1. Add resource to your server
+2. Give "Admin" ACL permissions to the resource
+3. Edit permissionACL variable in editorS.lua with your admin ACL group
+4. Start resource and use /editor command
 
-This is just the first of many free tools I plan to release. The MTA community has always been about helping each other build better servers.
+Why Im sharing this:
+I believe in giving back to the MTA community. This enhanced tool has saved me countless hours of development time with its new resource management features.
 
 Download it, try it out, and let me know what you think. More contributions coming soon.
 
-Developed by BranD - Trident Sky Hosting
-
-I appreciate it if you join and support me on discord, even if it's just a small contribution 
-
-https://discord.gg/mjWuv7Zbyh
-
-Video Demo:
-https://youtu.be/syGNFbU41qU
+Developed by BranD - Trident Sky Company
