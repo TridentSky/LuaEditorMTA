@@ -51,6 +51,7 @@ function openEditorPanel(scripts)
             setTimer(function()
                 if (editorBrowser and guiGetVisible(editorGui)) then
                     loadScriptsList(scripts)
+                    guiSetInputEnabled(true)
                 end
             end, 2000, 1)
         end
@@ -62,6 +63,7 @@ function openEditorPanel(scripts)
             focusBrowser(editorBrowser)
             isMinimized = false
             loadScriptsList(scripts)
+            guiSetInputEnabled(true)
         end
     end
 end
@@ -154,6 +156,7 @@ function closePanel()
         editorBrowser = nil
         showCursor(false)
         isMinimized = false
+        guiSetInputEnabled(false)
     end
 end
 addEvent("luaEditor.closePanel", true)
@@ -164,6 +167,7 @@ function minimizePanel()
         guiSetVisible(editorGui, false)
         showCursor(false)
         isMinimized = true
+        guiSetInputEnabled(false)
     end
 end
 addEvent("luaEditor.minimizePanel", true)
@@ -176,6 +180,7 @@ function restoreEditorPanel()
         showCursor(true)
         focusBrowser(editorBrowser)
         isMinimized = false
+        guiSetInputEnabled(true)
     end
 end
 
