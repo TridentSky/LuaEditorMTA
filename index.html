@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lua Editor MTA:SA</title>
+    <title>Lua Editor MTA:SA v3.0</title>
     <link rel="stylesheet" href="CodeMirror/codemirror.min.css">
     <link rel="stylesheet" href="CodeMirror/material-darker.min.css">
     <script src="CodeMirror/codemirror.min.js"></script>
@@ -166,7 +166,9 @@
             font-size: 11px;
             color: #ffffff;
             border-bottom: 1px solid #4a4a4a;
-            transition: background 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .script-item:last-child {
@@ -180,6 +182,40 @@
         .script-item.selected {
             background: #4CAF50;
             color: #000;
+            font-weight: bold;
+        }
+
+        .script-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .script-actions {
+            display: none;
+            gap: 3px;
+        }
+
+        .script-item:hover .script-actions {
+            display: flex;
+        }
+
+        .script-action-btn {
+            width: 16px;
+            height: 16px;
+            background: #2196F3;
+            color: #fff;
+            border: none;
+            border-radius: 2px;
+            cursor: pointer;
+            font-size: 9px;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+
+        .script-action-btn:hover {
+            background: #1976D2;
         }
 
         .loading-message {
@@ -207,6 +243,38 @@
 
         .info-value {
             color: #ffffff;
+        }
+
+        .action-buttons-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-top: 8px;
+        }
+
+        .sidebar-action-btn {
+            width: 100%;
+            padding: 5px 8px;
+            background: #2196F3;
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-action-btn:hover {
+            background: #1976D2;
+        }
+
+        .sidebar-action-btn.logs {
+            background: #FF9800;
+        }
+
+        .sidebar-action-btn.logs:hover {
+            background: #F57C00;
         }
 
         .file-tree {
@@ -535,11 +603,6 @@
             background: #1976D2;
         }
 
-        .minimized {
-            height: 50px;
-            overflow: hidden;
-        }
-
         .modal {
             position: fixed;
             top: 50%;
@@ -624,6 +687,110 @@
             display: none;
         }
 
+        .logs-viewer {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #2d2d2d;
+            border: 1px solid #4a4a4a;
+            border-radius: 8px;
+            padding: 15px;
+            z-index: 2500;
+            width: 50vw;
+            max-width: 600px;
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+
+        .logs-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #4a4a4a;
+        }
+
+        .logs-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #FF9800;
+        }
+
+        .logs-close-btn {
+            padding: 5px 12px;
+            background: #ff5f56;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .logs-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .logs-table th {
+            background: #3c3c3c;
+            padding: 6px;
+            text-align: left;
+            font-size: 10px;
+            color: #4CAF50;
+            border-bottom: 1px solid #4a4a4a;
+        }
+
+        .logs-table td {
+            padding: 6px;
+            font-size: 9px;
+            color: #cccccc;
+            border-bottom: 1px solid #3a3a3a;
+        }
+
+        .logs-table tr:hover {
+            background: #3a3a3a;
+        }
+
+        .logs-action {
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-weight: bold;
+            font-size: 9px;
+        }
+
+        .logs-action.EDIT {
+            background: #2196F3;
+            color: #fff;
+        }
+
+        .logs-action.CREATE {
+            background: #4CAF50;
+            color: #000;
+        }
+
+        .logs-action.DELETE {
+            background: #ff5f56;
+            color: #fff;
+        }
+
+        .logs-action.BLOCKED_FUNCTION {
+            background: #FF9800;
+            color: #000;
+        }
+
+        .logs-action.CREATE_RESOURCE {
+            background: #9C27B0;
+            color: #fff;
+        }
+
+        .logs-action.RENAME_RESOURCE {
+            background: #00BCD4;
+            color: #000;
+        }
+
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -645,31 +812,35 @@
 <body>
     <div class="panel-container" id="panel">
         <div class="panel-header">
-            <div class="panel-title" data-lang="title">Lua Editor MTA:SA</div>
+            <div class="panel-title">
+                <span data-lang="title">Lua Editor MTA:SA v3.0</span>
+                <span id="currentResourceName" style="margin-left: 15px; color: #4CAF50; font-size: 11px;"></span>
+            </div>
             <div class="panel-controls">
                 <div class="language-selector">
-                    <button class="lang-btn active" onclick="changeLanguage('en')">EN</button>
-                    <button class="lang-btn" onclick="changeLanguage('pt')">PT</button>
-                    <button class="lang-btn" onclick="changeLanguage('es')">ES</button>
-                    <button class="lang-btn" onclick="changeLanguage('tr')">TR</button>
-                    <button class="lang-btn" onclick="changeLanguage('ar')">AR</button>
+                    <button class="lang-btn active" onclick="changeLanguage('en', event)">EN</button>
+                    <button class="lang-btn" onclick="changeLanguage('pt', event)">PT</button>
+                    <button class="lang-btn" onclick="changeLanguage('es', event)">ES</button>
+                    <button class="lang-btn" onclick="changeLanguage('tr', event)">TR</button>
+                    <button class="lang-btn" onclick="changeLanguage('ar', event)">AR</button>
                 </div>
                 <button class="control-btn minimize-btn" onclick="minimizePanel()">_</button>
                 <button class="control-btn close-btn" onclick="closePanel()">×</button>
             </div>
         </div>
-        
+
         <div class="panel-content">
             <div class="sidebar">
                 <div class="sidebar-section">
                     <h3 data-lang="scripts">Scripts</h3>
-                    <div class="search-container">
-                        <input type="text" class="script-search" id="scriptSearch" data-lang-placeholder="search_script" placeholder="Search script..." oninput="filterScripts()">
+                    <div class="search-container" style="display: flex; gap: 5px;">
+                        <input type="text" class="script-search" id="scriptSearch" data-lang-placeholder="search_script" placeholder="Search script..." oninput="filterScripts()" style="flex: 1;">
+                        <button onclick="refreshScriptsList()" style="padding: 5px 10px; background: #4CAF50; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 11px;" title="Refresh scripts list">↻</button>
                     </div>
                     <div class="script-list" id="scriptList">
                         <div class="loading-message" data-lang="loading">Loading scripts...</div>
                     </div>
-                    
+
                     <div class="script-info" id="scriptInfo">
                         <div class="info-item">
                             <span class="info-label" data-lang="files">Files:</span>
@@ -692,42 +863,47 @@
                             <span class="info-value">0 KB</span>
                         </div>
                     </div>
+
+                    <div class="action-buttons-sidebar">
+                        <button class="sidebar-action-btn" onclick="showCreateResourceModal()" data-lang="create_resource">+ Create Resource</button>
+                        <button class="sidebar-action-btn logs" onclick="requestAndShowLogs()" data-lang="view_logs">View Logs</button>
+                    </div>
                 </div>
-                
+
                 <div class="file-tree" id="fileTree">
                     <h3 data-lang="files">Files</h3>
-                    
+
                     <div class="create-file-section">
                         <div class="create-file-title" data-lang="create_file">Create New File</div>
                         <button class="create-file-btn" onclick="showCreateFileModal()" data-lang="create_btn">+ Create File</button>
                     </div>
-                    
+
                     <div class="file-list-container">
                         <div id="fileList">
                             <div class="no-selection" data-lang="no_selection">Select a script from the list</div>
                         </div>
                     </div>
-                    
+
                     <div class="copyright">
                         <div>© 2025 <span class="brand">BranD</span></div>
                         <div><span class="company">Trident Sky</span></div>
                     </div>
                 </div>
             </div>
-            
+
             <div class="editor-container">
                 <div class="editor-tabs" id="editorTabs">
                     <div class="tab">
                         <span data-lang="no_file_selected">No file selected</span>
                     </div>
                 </div>
-                
+
                 <div class="editor-wrapper">
                     <div class="code-editor-container">
                         <textarea id="codeEditor"></textarea>
                     </div>
                 </div>
-                
+
                 <div class="editor-footer">
                     <div id="notification" class="notification"></div>
                     <div class="status-info">
@@ -736,8 +912,8 @@
                         <span style="margin-left: 15px;" id="fileStatus"></span>
                     </div>
                     <div class="action-buttons">
-                        <button class="action-btn secondary" onclick="copyCode()" data-lang="copy">Copy</button>
-                        <button class="action-btn" onclick="sendCode()" data-lang="send" disabled>Send</button>
+                        <button class="action-btn secondary" onclick="copyCode(event)" data-lang="copy">Copy</button>
+                        <button class="action-btn" onclick="sendCode(event)" data-lang="send" disabled>Send</button>
                     </div>
                 </div>
             </div>
@@ -756,38 +932,121 @@
         </div>
     </div>
 
-    <div id="createModal" class="modal hidden">
+    <div id="createFileModal" class="modal hidden">
         <div class="modal-title" data-lang="create_new_file">Create New File</div>
         <div class="modal-content">
             <p style="color: #cccccc; font-size: 11px; margin-bottom: 10px;">
                 <span data-lang="script_target">Script:</span> <span id="targetScript" style="color: #4CAF50; font-weight: bold;"></span>
             </p>
+            <input type="text" id="newFilePath" class="modal-input" placeholder="Path (optional, e.g. routes/ or leave empty)" style="margin-bottom: 10px;">
             <input type="text" id="newFileName" class="modal-input" data-lang-placeholder="file_name" placeholder="File name (without .lua)">
-            <div class="file-type-options">
-                <label class="radio-option">
-                    <input type="radio" name="fileType" value="server" checked>
-                    <span class="radio-text">Server</span>
-                </label>
-                <label class="radio-option">
-                    <input type="radio" name="fileType" value="client">
-                    <span class="radio-text">Client</span>
-                </label>
-                <label class="radio-option">
-                    <input type="radio" name="fileType" value="shared">
-                    <span class="radio-text">Shared</span>
-                </label>
+            <div style="margin-top: 10px;">
+                <p style="color: #cccccc; font-size: 11px; margin-bottom: 8px;">File Type:</p>
+                <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+                    <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: #ffffff; font-size: 12px;">
+                        <input type="radio" name="fileType" value="server" checked style="cursor: pointer;">
+                        <span>Server</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: #ffffff; font-size: 12px;">
+                        <input type="radio" name="fileType" value="client" style="cursor: pointer;">
+                        <span>Client</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: #ffffff; font-size: 12px;">
+                        <input type="radio" name="fileType" value="shared" style="cursor: pointer;">
+                        <span>Shared</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: #ffffff; font-size: 12px;">
+                        <input type="radio" name="fileType" value="html" style="cursor: pointer;">
+                        <span>HTML</span>
+                    </label>
+                </div>
             </div>
         </div>
         <div class="modal-buttons">
-            <button class="modal-btn cancel" onclick="hideCreateModal()" data-lang="cancel">Cancel</button>
-            <button class="modal-btn confirm" onclick="confirmCreate()" data-lang="create">Create</button>
+            <button class="modal-btn cancel" onclick="hideCreateFileModal()" data-lang="cancel">Cancel</button>
+            <button class="modal-btn confirm" onclick="confirmCreateFile()" data-lang="create">Create</button>
+        </div>
+    </div>
+
+    <div id="createResourceModal" class="modal hidden">
+        <div class="modal-title" data-lang="create_new_resource">Create New Resource</div>
+        <div class="modal-content">
+            <p style="color: #cccccc; font-size: 11px; margin-bottom: 10px;" data-lang="resource_name_label">Resource Name:</p>
+            <input type="text" id="newResourceName" class="modal-input" data-lang-placeholder="resource_name" placeholder="Enter resource name">
+            <p style="color: #cccccc; font-size: 11px; margin-bottom: 10px; margin-top: 10px;" data-lang="organizational_dir_label">Organizational Directory (Optional):</p>
+            <input type="text" id="organizationalDir" class="modal-input" data-lang-placeholder="organizational_dir" placeholder="e.g. myScripts (optional)">
+        </div>
+        <div class="modal-buttons">
+            <button class="modal-btn cancel" onclick="hideCreateResourceModal()" data-lang="cancel">Cancel</button>
+            <button class="modal-btn confirm" onclick="confirmCreateResource()" data-lang="create">Create</button>
+        </div>
+    </div>
+
+    <div id="renameResourceModal" class="modal hidden">
+        <div class="modal-title" data-lang="rename_resource">Rename Resource</div>
+        <div class="modal-content">
+            <p style="color: #cccccc; font-size: 11px; margin-bottom: 10px;">
+                <span data-lang="current_name">Current:</span> <span id="renameCurrentResourceName" style="color: #4CAF50; font-weight: bold;"></span>
+            </p>
+            <p style="color: #cccccc; font-size: 11px; margin-bottom: 10px;" data-lang="new_name_label">New Name:</p>
+            <input type="text" id="newRenamedResourceName" class="modal-input" data-lang-placeholder="new_resource_name" placeholder="Enter new resource name">
+            <p style="color: #cccccc; font-size: 11px; margin-bottom: 10px; margin-top: 10px;" data-lang="organizational_path_label">Organizational Path (Optional):</p>
+            <input type="text" id="organizationalPath" class="modal-input" data-lang-placeholder="organizational_path" placeholder="e.g. myScripts (optional)">
+        </div>
+        <div class="modal-buttons">
+            <button class="modal-btn cancel" onclick="hideRenameResourceModal()" data-lang="cancel">Cancel</button>
+            <button class="modal-btn confirm" onclick="confirmRenameResource()" data-lang="rename">Rename</button>
+        </div>
+    </div>
+
+    <div id="deleteResourceModal" class="modal hidden">
+        <div class="modal-title" data-lang="confirm_delete_resource">Confirm Delete Resource</div>
+        <div class="modal-content">
+            <p style="color: #ff5f56; font-size: 12px; margin-bottom: 15px;">
+                <span data-lang="delete_resource_warning">WARNING: This will permanently delete the entire resource and all its files!</span>
+            </p>
+            <p style="color: #cccccc; font-size: 11px; margin-bottom: 10px;">
+                <span data-lang="resource_to_delete">Resource:</span> <span id="deleteResourceName" style="color: #4CAF50; font-weight: bold;"></span>
+            </p>
+        </div>
+        <div class="modal-buttons">
+            <button class="modal-btn cancel" onclick="hideDeleteResourceModal()" data-lang="cancel">Cancel</button>
+            <button class="modal-btn confirm" style="background: #ff5f56;" onclick="confirmDeleteResource()" data-lang="delete">Delete</button>
+        </div>
+    </div>
+
+    <div id="logsViewer" class="logs-viewer hidden">
+        <div class="logs-header">
+            <div class="logs-title" data-lang="logs_viewer_title">Activity Logs</div>
+            <button class="logs-close-btn" onclick="hideLogsViewer()" data-lang="close">Close</button>
+        </div>
+        <div id="logsContent">
+            <table class="logs-table">
+                <thead>
+                    <tr>
+                        <th data-lang="logs_date">Date</th>
+                        <th data-lang="logs_time">Time</th>
+                        <th data-lang="logs_player">Player</th>
+                        <th data-lang="logs_account">Account</th>
+                        <th data-lang="logs_action">Action</th>
+                        <th data-lang="logs_resource">Resource</th>
+                        <th data-lang="logs_file">File</th>
+                        <th data-lang="logs_details">Details</th>
+                    </tr>
+                </thead>
+                <tbody id="logsTableBody">
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 20px; color: #666;">No logs available</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
     <script>
         const languages = {
             es: {
-                title: "Editor Lua MTA:SA",
+                title: "Editor Lua MTA:SA v3.0",
                 scripts: "Scripts",
                 files: "Archivos",
                 size: "Tamaño",
@@ -798,13 +1057,10 @@
                 send: "Enviar",
                 copied: "¡Copiado!",
                 sent: "¡Enviado!",
-                code_placeholder: "Selecciona un archivo para empezar a editar...",
                 no_selection: "Selecciona un script de la lista",
                 no_file_selected: "Ningún archivo seleccionado",
                 loading: "Cargando scripts...",
-                loading_files: "Cargando archivos...",
                 compiled_file: "Archivo compilado (solo lectura)",
-                error_loading: "Error al cargar",
                 create_file: "Crear Nuevo Archivo",
                 create_btn: "+ Crear Archivo",
                 confirm_delete: "Confirmar Eliminación",
@@ -816,10 +1072,38 @@
                 create: "Crear",
                 script_target: "Script",
                 select_script_first: "Selecciona un script primero",
-                enter_file_name: "Ingresa un nombre de archivo"
+                enter_file_name: "Ingresa un nombre de archivo",
+                create_resource: "+ Crear Recurso",
+                view_logs: "Ver Logs",
+                create_new_resource: "Crear Nuevo Recurso",
+                resource_name_label: "Nombre del Recurso:",
+                resource_name: "Ingresa nombre del recurso",
+                organizational_dir_label: "Directorio Organizacional (Opcional):",
+                organizational_dir: "ej. misScripts (opcional)",
+                rename_resource: "Renombrar Recurso",
+                current_name: "Actual:",
+                new_name_label: "Nuevo Nombre:",
+                new_resource_name: "Ingresa nuevo nombre del recurso",
+                organizational_path_label: "Ruta Organizacional (Opcional):",
+                organizational_path: "ej. misScripts (opcional)",
+                rename: "Renombrar",
+                logs_viewer_title: "Registro de Actividades",
+                close: "Cerrar",
+                logs_date: "Fecha",
+                logs_time: "Hora",
+                logs_player: "Jugador",
+                logs_account: "Cuenta",
+                logs_action: "Acción",
+                logs_resource: "Recurso",
+                logs_file: "Archivo",
+                logs_details: "Detalles",
+                confirm_delete_resource: "Confirmar Eliminar Recurso",
+                delete_resource_warning: "ADVERTENCIA: ¡Esto eliminará permanentemente todo el recurso y todos sus archivos!",
+                resource_to_delete: "Recurso",
+                editing: "Editando"
             },
             pt: {
-                title: "Editor Lua MTA:SA",
+                title: "Editor Lua MTA:SA v3.0",
                 scripts: "Scripts",
                 files: "Arquivos",
                 size: "Tamanho",
@@ -830,13 +1114,10 @@
                 send: "Enviar",
                 copied: "Copiado!",
                 sent: "Enviado!",
-                code_placeholder: "Selecione um arquivo para começar a editar...",
                 no_selection: "Selecione um script da lista",
                 no_file_selected: "Nenhum arquivo selecionado",
                 loading: "Carregando scripts...",
-                loading_files: "Carregando arquivos...",
                 compiled_file: "Arquivo compilado (somente leitura)",
-                error_loading: "Erro ao carregar",
                 create_file: "Criar Novo Arquivo",
                 create_btn: "+ Criar Arquivo",
                 confirm_delete: "Confirmar Exclusão",
@@ -848,10 +1129,34 @@
                 create: "Criar",
                 script_target: "Script",
                 select_script_first: "Selecione um script primeiro",
-                enter_file_name: "Digite um nome de arquivo"
+                enter_file_name: "Digite um nome de arquivo",
+                create_resource: "+ Criar Recurso",
+                view_logs: "Ver Logs",
+                create_new_resource: "Criar Novo Recurso",
+                resource_name_label: "Nome do Recurso:",
+                resource_name: "Digite o nome do recurso",
+                organizational_dir_label: "Diretório Organizacional (Opcional):",
+                organizational_dir: "ex. meusScripts (opcional)",
+                rename_resource: "Renomear Recurso",
+                current_name: "Atual:",
+                new_name_label: "Novo Nome:",
+                new_resource_name: "Digite o novo nome do recurso",
+                organizational_path_label: "Caminho Organizacional (Opcional):",
+                organizational_path: "ex. meusScripts (opcional)",
+                rename: "Renomear",
+                logs_viewer_title: "Registro de Atividades",
+                close: "Fechar",
+                logs_date: "Data",
+                logs_time: "Hora",
+                logs_player: "Jogador",
+                logs_account: "Conta",
+                logs_action: "Ação",
+                logs_resource: "Recurso",
+                logs_file: "Arquivo",
+                logs_details: "Detalhes"
             },
             en: {
-                title: "Lua Editor MTA:SA",
+                title: "Lua Editor MTA:SA v3.0",
                 scripts: "Scripts",
                 files: "Files",
                 size: "Size",
@@ -862,13 +1167,10 @@
                 send: "Send",
                 copied: "Copied!",
                 sent: "Sent!",
-                code_placeholder: "Select a file to start editing...",
                 no_selection: "Select a script from the list",
                 no_file_selected: "No file selected",
                 loading: "Loading scripts...",
-                loading_files: "Loading files...",
                 compiled_file: "Compiled file (read-only)",
-                error_loading: "Error loading",
                 create_file: "Create New File",
                 create_btn: "+ Create File",
                 confirm_delete: "Confirm Delete",
@@ -880,10 +1182,34 @@
                 create: "Create",
                 script_target: "Script",
                 select_script_first: "Please select a script first",
-                enter_file_name: "Please enter a file name"
+                enter_file_name: "Please enter a file name",
+                create_resource: "+ Create Resource",
+                view_logs: "View Logs",
+                create_new_resource: "Create New Resource",
+                resource_name_label: "Resource Name:",
+                resource_name: "Enter resource name",
+                organizational_dir_label: "Organizational Directory (Optional):",
+                organizational_dir: "e.g. myScripts (optional)",
+                rename_resource: "Rename Resource",
+                current_name: "Current:",
+                new_name_label: "New Name:",
+                new_resource_name: "Enter new resource name",
+                organizational_path_label: "Organizational Path (Optional):",
+                organizational_path: "e.g. myScripts (optional)",
+                rename: "Rename",
+                logs_viewer_title: "Activity Logs",
+                close: "Close",
+                logs_date: "Date",
+                logs_time: "Time",
+                logs_player: "Player",
+                logs_account: "Account",
+                logs_action: "Action",
+                logs_resource: "Resource",
+                logs_file: "File",
+                logs_details: "Details"
             },
             tr: {
-                title: "Lua Editörü MTA:SA",
+                title: "Lua Editörü MTA:SA v3.0",
                 scripts: "Scriptler",
                 files: "Dosyalar",
                 size: "Boyut",
@@ -894,13 +1220,10 @@
                 send: "Gönder",
                 copied: "Kopyalandı!",
                 sent: "Gönderildi!",
-                code_placeholder: "Düzenlemek için bir dosya seçin...",
                 no_selection: "Listeden bir script seçin",
                 no_file_selected: "Dosya seçilmedi",
                 loading: "Scriptler yükleniyor...",
-                loading_files: "Dosyalar yükleniyor...",
                 compiled_file: "Derlenmiş dosya (salt okunur)",
-                error_loading: "Yükleme hatası",
                 create_file: "Yeni Dosya Oluştur",
                 create_btn: "+ Dosya Oluştur",
                 confirm_delete: "Silmeyi Onayla",
@@ -912,10 +1235,34 @@
                 create: "Oluştur",
                 script_target: "Script",
                 select_script_first: "Lütfen önce bir script seçin",
-                enter_file_name: "Lütfen bir dosya adı girin"
+                enter_file_name: "Lütfen bir dosya adı girin",
+                create_resource: "+ Kaynak Oluştur",
+                view_logs: "Logları Görüntüle",
+                create_new_resource: "Yeni Kaynak Oluştur",
+                resource_name_label: "Kaynak Adı:",
+                resource_name: "Kaynak adını girin",
+                organizational_dir_label: "Organizasyonel Dizin (İsteğe Bağlı):",
+                organizational_dir: "örn. benimScriptlerim (isteğe bağlı)",
+                rename_resource: "Kaynağı Yeniden Adlandır",
+                current_name: "Mevcut:",
+                new_name_label: "Yeni Ad:",
+                new_resource_name: "Yeni kaynak adını girin",
+                organizational_path_label: "Organizasyonel Yol (İsteğe Bağlı):",
+                organizational_path: "örn. benimScriptlerim (isteğe bağlı)",
+                rename: "Yeniden Adlandır",
+                logs_viewer_title: "Etkinlik Günlükleri",
+                close: "Kapat",
+                logs_date: "Tarih",
+                logs_time: "Saat",
+                logs_player: "Oyuncu",
+                logs_account: "Hesap",
+                logs_action: "Eylem",
+                logs_resource: "Kaynak",
+                logs_file: "Dosya",
+                logs_details: "Detaylar"
             },
             ar: {
-                title: "محرر لوا MTA:SA",
+                title: "محرر لوا MTA:SA v3.0",
                 scripts: "السكريبتات",
                 files: "الملفات",
                 size: "الحجم",
@@ -926,13 +1273,10 @@
                 send: "إرسال",
                 copied: "تم النسخ!",
                 sent: "تم الإرسال!",
-                code_placeholder: "اختر ملفاً لبدء التعديل...",
                 no_selection: "اختر سكريبت من القائمة",
                 no_file_selected: "لم يتم اختيار ملف",
                 loading: "جاري تحميل السكريبتات...",
-                loading_files: "جاري تحميل الملفات...",
                 compiled_file: "ملف مترجم (للقراءة فقط)",
-                error_loading: "خطأ في التحميل",
                 create_file: "إنشاء ملف جديد",
                 create_btn: "+ إنشاء ملف",
                 confirm_delete: "تأكيد الحذف",
@@ -944,7 +1288,31 @@
                 create: "إنشاء",
                 script_target: "سكريبت",
                 select_script_first: "يرجى اختيار سكريبت أولاً",
-                enter_file_name: "يرجى إدخال اسم الملف"
+                enter_file_name: "يرجى إدخال اسم الملف",
+                create_resource: "+ إنشاء مورد",
+                view_logs: "عرض السجلات",
+                create_new_resource: "إنشاء مورد جديد",
+                resource_name_label: "اسم المورد:",
+                resource_name: "أدخل اسم المورد",
+                organizational_dir_label: "الدليل التنظيمي (اختياري):",
+                organizational_dir: "مثال: سكريبتاتي (اختياري)",
+                rename_resource: "إعادة تسمية المورد",
+                current_name: "الحالي:",
+                new_name_label: "الاسم الجديد:",
+                new_resource_name: "أدخل اسم المورد الجديد",
+                organizational_path_label: "المسار التنظيمي (اختياري):",
+                organizational_path: "مثال: سكريبتاتي (اختياري)",
+                rename: "إعادة تسمية",
+                logs_viewer_title: "سجلات الأنشطة",
+                close: "إغلاق",
+                logs_date: "التاريخ",
+                logs_time: "الوقت",
+                logs_player: "اللاعب",
+                logs_account: "الحساب",
+                logs_action: "الإجراء",
+                logs_resource: "المورد",
+                logs_file: "الملف",
+                logs_details: "التفاصيل"
             }
         };
 
@@ -957,6 +1325,7 @@
         let isModified = false;
         let codeMirrorEditor = null;
         let fileToDelete = null;
+        let resourceToRename = null;
 
         function initCodeMirror() {
             const textarea = document.getElementById('codeEditor');
@@ -984,42 +1353,72 @@
             }, 100);
         }
 
-        function changeLanguage(lang) {
+        function setDefaultLanguage(lang) {
+            if (languages[lang]) {
+                changeLanguage(lang);
+            }
+        }
+
+        function changeLanguage(lang, event) {
             currentLanguage = lang;
-            
+
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            event.target.classList.add('active');
-            
+
+            if (event && event.target) {
+                event.target.classList.add('active');
+            } else {
+                const buttons = document.querySelectorAll('.lang-btn');
+                buttons.forEach(btn => {
+                    if (btn.textContent.toLowerCase() === lang.toLowerCase() ||
+                        btn.onclick.toString().includes(`'${lang}'`)) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
+
             document.querySelectorAll('[data-lang]').forEach(element => {
                 const key = element.getAttribute('data-lang');
                 if (languages[lang][key]) {
                     element.textContent = languages[lang][key];
                 }
             });
-            
+
             document.querySelectorAll('[data-lang-placeholder]').forEach(element => {
                 const key = element.getAttribute('data-lang-placeholder');
                 if (languages[lang][key]) {
                     element.placeholder = languages[lang][key];
                 }
             });
-            
+
             updateFileStatus();
         }
 
-        function loadScriptsList(scripts) {
+        window.loadScriptsList = function(scripts) {
             scriptsData = scripts || [];
-            filteredScripts = [...scriptsData];
-            renderScriptsList();
+            applySearchFilter();
+            renderScriptsListIntelligent();
         }
 
-        function renderScriptsList() {
+        function applySearchFilter() {
+            const searchBox = document.getElementById('scriptSearch');
+            const searchTerm = searchBox ? searchBox.value.toLowerCase() : '';
+
+            if (searchTerm === '') {
+                filteredScripts = [...scriptsData];
+            } else {
+                filteredScripts = scriptsData.filter(script =>
+                    script.name.toLowerCase().includes(searchTerm)
+                );
+            }
+        }
+
+        function renderScriptsListIntelligent() {
             const scriptList = document.getElementById('scriptList');
-            scriptList.innerHTML = '';
-            
-            if (filteredScripts.length === 0) {
+
+            if (filteredScripts.length === 0 && scriptsData.length === 0) {
+                scriptList.innerHTML = '';
                 const loadingMsg = document.createElement('div');
                 loadingMsg.className = 'loading-message';
                 loadingMsg.setAttribute('data-lang', 'loading');
@@ -1027,35 +1426,140 @@
                 scriptList.appendChild(loadingMsg);
                 return;
             }
-            
-            filteredScripts.forEach((script, index) => {
-                const scriptItem = document.createElement('div');
-                scriptItem.className = 'script-item';
-                scriptItem.textContent = script.name;
-                scriptItem.onclick = () => selectScript(script.name, index);
-                scriptList.appendChild(scriptItem);
+
+            const loadingMessage = scriptList.querySelector('.loading-message');
+            if (loadingMessage) {
+                loadingMessage.remove();
+            }
+
+            const existingItems = scriptList.querySelectorAll('.script-item');
+            const existingNames = new Map();
+            existingItems.forEach(item => {
+                const nameSpan = item.querySelector('.script-name');
+                if (nameSpan) {
+                    existingNames.set(nameSpan.textContent, item);
+                }
             });
+
+            const newScriptNames = new Set(filteredScripts.map(s => s.name));
+
+            existingItems.forEach(item => {
+                const nameSpan = item.querySelector('.script-name');
+                if (nameSpan && !newScriptNames.has(nameSpan.textContent)) {
+                    item.remove();
+                }
+            });
+
+            filteredScripts.forEach((script, index) => {
+                const existingItem = existingNames.get(script.name);
+
+                if (existingItem) {
+                    const nameSpan = existingItem.querySelector('.script-name');
+                    if (nameSpan && nameSpan.textContent !== script.name) {
+                        nameSpan.textContent = script.name;
+                        nameSpan.title = script.name;
+                    }
+
+                    if (currentScript === script.name) {
+                        existingItem.classList.add('selected');
+                    } else {
+                        existingItem.classList.remove('selected');
+                    }
+
+                    if (existingItem.parentNode !== scriptList) {
+                        scriptList.appendChild(existingItem);
+                    }
+                } else {
+                    const scriptItem = createScriptItemElement(script, index);
+                    scriptList.appendChild(scriptItem);
+                }
+            });
+
+            const currentItems = Array.from(scriptList.querySelectorAll('.script-item'));
+            const orderedNames = filteredScripts.map(s => s.name);
+
+            currentItems.forEach((item, idx) => {
+                const nameSpan = item.querySelector('.script-name');
+                if (nameSpan) {
+                    const expectedName = orderedNames[idx];
+                    if (nameSpan.textContent !== expectedName) {
+                        const correctItem = currentItems.find(it => {
+                            const ns = it.querySelector('.script-name');
+                            return ns && ns.textContent === expectedName;
+                        });
+                        if (correctItem && correctItem !== item) {
+                            scriptList.insertBefore(correctItem, item);
+                        }
+                    }
+                }
+            });
+        }
+
+        function createScriptItemElement(script, index) {
+            const scriptItem = document.createElement('div');
+            scriptItem.className = 'script-item';
+            if (currentScript === script.name) {
+                scriptItem.classList.add('selected');
+            }
+
+            const scriptName = document.createElement('span');
+            scriptName.className = 'script-name';
+            scriptName.textContent = script.name;
+            scriptName.title = script.name;
+            scriptName.onclick = (e) => selectScript(script.name, index, e);
+
+            const actions = document.createElement('div');
+            actions.className = 'script-actions';
+
+            const renameBtn = document.createElement('button');
+            renameBtn.className = 'script-action-btn';
+            renameBtn.innerHTML = 'R';
+            renameBtn.title = 'Rename resource';
+            renameBtn.onclick = (e) => {
+                e.stopPropagation();
+                showRenameResourceModal(script.name);
+            };
+
+            const deleteResBtn = document.createElement('button');
+            deleteResBtn.className = 'script-action-btn';
+            deleteResBtn.innerHTML = '×';
+            deleteResBtn.title = 'Delete resource';
+            deleteResBtn.style.background = '#ff5f56';
+            deleteResBtn.onclick = (e) => {
+                e.stopPropagation();
+                showDeleteResourceModal(script.name);
+            };
+
+            actions.appendChild(renameBtn);
+            actions.appendChild(deleteResBtn);
+            scriptItem.appendChild(scriptName);
+            scriptItem.appendChild(actions);
+
+            return scriptItem;
         }
 
         function filterScripts() {
-            const searchTerm = document.getElementById('scriptSearch').value.toLowerCase();
-            filteredScripts = scriptsData.filter(script => 
-                script.name.toLowerCase().includes(searchTerm)
-            );
-            renderScriptsList();
+            applySearchFilter();
+            renderScriptsListIntelligent();
         }
 
-        function selectScript(scriptName, index) {
-            document.querySelectorAll('.script-item').forEach(item => {
-                item.classList.remove('selected');
-            });
-            
-            event.target.classList.add('selected');
+        function refreshScriptsList() {
+            if (typeof mta !== 'undefined' && mta.triggerEvent) {
+                mta.triggerEvent("luaEditor.requestScriptsList");
+            }
+        }
+
+        function selectScript(scriptName, index, event) {
             currentScript = scriptName;
-            
+
+            renderScriptsListIntelligent();
+
             updateScriptInfo(filteredScripts[index]);
             clearEditor();
-            
+
+            const editingLabel = languages[currentLanguage]['editing'] || 'Editing';
+            document.getElementById('currentResourceName').textContent = `${editingLabel}: ${scriptName}`;
+
             if (typeof mta !== 'undefined' && mta.triggerEvent) {
                 mta.triggerEvent("luaEditor.requestScriptFiles", scriptName);
             }
@@ -1063,13 +1567,13 @@
 
         function updateScriptInfo(script) {
             if (!script) return;
-            
+
             const clientFiles = script.clientFiles ? script.clientFiles.length : 0;
             const serverFiles = script.serverFiles ? script.serverFiles.length : 0;
             const sharedFiles = script.sharedFiles ? script.sharedFiles.length : 0;
             const totalFiles = clientFiles + serverFiles + sharedFiles;
             const totalSize = Math.round((totalFiles * 15.5) * 100) / 100;
-            
+
             document.getElementById('scriptInfo').innerHTML = `
                 <div class="info-item">
                     <span class="info-label" data-lang="files">${languages[currentLanguage]['files']}:</span>
@@ -1097,7 +1601,7 @@
         function loadScriptFiles(scriptName, files) {
             const fileList = document.getElementById('fileList');
             fileList.innerHTML = '';
-            
+
             if (!files || files.length === 0) {
                 const noFiles = document.createElement('div');
                 noFiles.className = 'no-selection';
@@ -1106,23 +1610,23 @@
                 fileList.appendChild(noFiles);
                 return;
             }
-            
+
             files.forEach(file => {
                 const fileItem = document.createElement('div');
                 fileItem.className = `file-item ${file.type}`;
-                
+
                 if (file.compiled) {
                     fileItem.classList.add('compiled');
                 }
-                
+
                 const fileName = document.createElement('div');
                 fileName.className = 'file-name';
                 fileName.textContent = file.path;
                 fileName.title = file.path;
-                fileName.onclick = () => selectFile(file);
-                
+                fileName.onclick = (e) => selectFile(file, e);
+
                 fileItem.appendChild(fileName);
-                
+
                 if (file.type !== 'meta') {
                     const deleteBtn = document.createElement('button');
                     deleteBtn.className = 'delete-btn';
@@ -1134,25 +1638,28 @@
                     };
                     fileItem.appendChild(deleteBtn);
                 }
-                
+
                 fileList.appendChild(fileItem);
             });
         }
 
-        function selectFile(file) {
+        function selectFile(file, event) {
             document.querySelectorAll('.file-item').forEach(item => {
                 item.classList.remove('active');
             });
-            
-            event.target.closest('.file-item').classList.add('active');
+
+            if (event && event.target) {
+                event.target.closest('.file-item').classList.add('active');
+            }
+
             currentFile = file;
-            
+
             if (file.compiled) {
                 loadCompiledFile(file);
             } else {
                 loadEditableFile(file);
             }
-            
+
             updateEditorTabs();
             updateFileStatus();
         }
@@ -1161,12 +1668,12 @@
             if (codeMirrorEditor) {
                 codeMirrorEditor.setValue('');
                 codeMirrorEditor.setOption('readOnly', true);
-                
+
                 originalCode = '';
                 isModified = false;
                 updateFileStatus();
             }
-            
+
             if (typeof mta !== 'undefined' && mta.triggerEvent) {
                 mta.triggerEvent("luaEditor.requestFileContent", currentScript, file.path);
             }
@@ -1174,12 +1681,12 @@
 
         function loadCompiledFile(file) {
             const compiledContent = "-- This file is compiled and cannot be edited\n-- File: " + file.path;
-            
+
             if (codeMirrorEditor) {
                 codeMirrorEditor.setValue(compiledContent);
                 codeMirrorEditor.setOption('readOnly', true);
             }
-            
+
             originalCode = compiledContent;
             isModified = false;
             updateCharCount();
@@ -1189,7 +1696,7 @@
 
         function updateEditorTabs() {
             const tabs = document.getElementById('editorTabs');
-            
+
             if (!currentFile) {
                 tabs.innerHTML = `
                     <div class="tab">
@@ -1198,10 +1705,10 @@
                 `;
                 return;
             }
-            
+
             const fileName = currentFile.path.split('/').pop();
             let tabClass = 'tab';
-            
+
             if (currentFile.compiled) {
                 tabClass += ' compiled';
             } else if (currentFile.type === 'meta') {
@@ -1209,7 +1716,7 @@
             } else {
                 tabClass += ' active';
             }
-            
+
             tabs.innerHTML = `
                 <div class="${tabClass}" title="${currentFile.path}">
                     ${fileName}
@@ -1219,18 +1726,18 @@
 
         function updateFileStatus() {
             const statusEl = document.getElementById('fileStatus');
-            
+
             if (!currentFile) {
                 statusEl.textContent = '';
                 return;
             }
-            
+
             if (currentFile.compiled) {
                 statusEl.textContent = languages[currentLanguage]['compiled_file'];
                 statusEl.style.color = '#9E9E9E';
             } else {
                 const currentCode = codeMirrorEditor ? codeMirrorEditor.getValue() : '';
-                
+
                 if (currentCode !== originalCode) {
                     statusEl.textContent = '● Modified';
                     statusEl.style.color = '#FF9800';
@@ -1246,11 +1753,11 @@
                 codeMirrorEditor.setValue('');
                 codeMirrorEditor.setOption('readOnly', true);
             }
-            
+
             currentFile = null;
             originalCode = '';
             isModified = false;
-            
+
             updateEditorTabs();
             updateCharCount();
             updateButtons();
@@ -1268,56 +1775,73 @@
 
         function updateButtons() {
             const sendBtn = document.querySelector('[data-lang="send"]');
-            
+
             const canEdit = currentFile && !currentFile.compiled;
             const currentCode = codeMirrorEditor ? codeMirrorEditor.getValue() : '';
-            
+
             sendBtn.disabled = !canEdit || currentCode === originalCode;
         }
 
         function onEditorInput() {
             if (!currentFile || currentFile.compiled) return;
-            
+
             if (codeMirrorEditor && !codeMirrorEditor.getOption('readOnly')) {
                 const currentCode = codeMirrorEditor.getValue();
                 isModified = currentCode !== originalCode;
-                
+
                 updateCharCount();
                 updateButtons();
                 updateFileStatus();
             }
         }
 
-        function copyCode() {
+        function copyCode(event) {
             if (codeMirrorEditor) {
                 const content = codeMirrorEditor.getValue();
-                navigator.clipboard.writeText(content).then(() => {
-                    const btn = event.target;
-                    const originalText = btn.textContent;
-                    btn.textContent = languages[currentLanguage]['copied'];
-                    setTimeout(() => {
-                        btn.textContent = originalText;
-                    }, 1000);
-                });
+
+                const textArea = document.createElement('textarea');
+                textArea.value = content;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.select();
+
+                try {
+                    document.execCommand('copy');
+                    if (event && event.target) {
+                        const btn = event.target;
+                        const originalText = btn.textContent;
+                        btn.textContent = languages[currentLanguage]['copied'];
+                        setTimeout(() => {
+                            btn.textContent = originalText;
+                        }, 1000);
+                    }
+                } catch (err) {
+                    console.error('Failed to copy:', err);
+                } finally {
+                    document.body.removeChild(textArea);
+                }
             }
         }
 
-        function sendCode() {
+        function sendCode(event) {
             if (!currentFile || currentFile.compiled || !codeMirrorEditor) return;
-            
+
             const newContent = codeMirrorEditor.getValue();
-            
+
             if (typeof mta !== 'undefined' && mta.triggerEvent) {
                 mta.triggerEvent("luaEditor.saveFileContent", currentScript, currentFile.path, newContent);
             }
-            
-            const btn = event.target;
-            const originalText = btn.textContent;
-            btn.textContent = languages[currentLanguage]['sent'];
-            setTimeout(() => {
-                btn.textContent = originalText;
-            }, 1000);
-            
+
+            if (event && event.target) {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = languages[currentLanguage]['sent'];
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 1000);
+            }
+
             originalCode = newContent;
             isModified = false;
             updateButtons();
@@ -1359,7 +1883,7 @@
             notification.textContent = message;
             notification.className = `notification ${type}`;
             notification.classList.add('show');
-            
+
             setTimeout(() => {
                 notification.classList.remove('show');
             }, 3000);
@@ -1371,29 +1895,191 @@
                 return;
             }
             document.getElementById('newFileName').value = '';
-            document.querySelector('input[name="fileType"][value="server"]').checked = true;
+            document.getElementById('newFilePath').value = '';
+            const radioButtons = document.querySelectorAll('input[name="fileType"]');
+            radioButtons.forEach(radio => {
+                radio.checked = radio.value === 'server';
+            });
             document.getElementById('targetScript').textContent = currentScript;
-            document.getElementById('createModal').classList.remove('hidden');
+            document.getElementById('createFileModal').classList.remove('hidden');
         }
 
-        function hideCreateModal() {
-            document.getElementById('createModal').classList.add('hidden');
+        function hideCreateFileModal() {
+            document.getElementById('createFileModal').classList.add('hidden');
         }
 
-        function confirmCreate() {
-            const fileName = document.getElementById('newFileName').value.trim();
-            const fileType = document.querySelector('input[name="fileType"]:checked').value;
-            
+        function confirmCreateFile() {
+            let fileName = document.getElementById('newFileName').value.trim();
+            const filePath = document.getElementById('newFilePath').value.trim();
+            const selectedRadio = document.querySelector('input[name="fileType"]:checked');
+            const fileType = selectedRadio ? selectedRadio.value : 'server';
+
             if (!fileName) {
                 showNotification(languages[currentLanguage]['enter_file_name'], 'warning');
                 return;
             }
-            
+
+            if (filePath) {
+                fileName = filePath + (filePath.endsWith('/') ? '' : '/') + fileName;
+            }
+
             if (typeof mta !== 'undefined' && mta.triggerEvent) {
                 mta.triggerEvent("luaEditor.createFile", currentScript, fileName, fileType);
             }
-            
-            hideCreateModal();
+
+            hideCreateFileModal();
+        }
+
+        function showCreateResourceModal() {
+            document.getElementById('newResourceName').value = '';
+            document.getElementById('organizationalDir').value = '';
+            document.getElementById('createResourceModal').classList.remove('hidden');
+        }
+
+        function hideCreateResourceModal() {
+            document.getElementById('createResourceModal').classList.add('hidden');
+        }
+
+        function confirmCreateResource() {
+            const resourceName = document.getElementById('newResourceName').value.trim();
+            const orgDir = document.getElementById('organizationalDir').value.trim();
+
+            if (!resourceName) {
+                showNotification('Please enter a resource name', 'warning');
+                return;
+            }
+
+            if (typeof mta !== 'undefined' && mta.triggerEvent) {
+                mta.triggerEvent("luaEditor.createResource", resourceName, orgDir);
+            }
+
+            hideCreateResourceModal();
+        }
+
+        function showRenameResourceModal(resourceName) {
+            resourceToRename = resourceName;
+            document.getElementById('renameCurrentResourceName').textContent = resourceName;
+            document.getElementById('newRenamedResourceName').value = '';
+            document.getElementById('organizationalPath').value = '';
+            document.getElementById('renameResourceModal').classList.remove('hidden');
+        }
+
+        function hideRenameResourceModal() {
+            document.getElementById('renameResourceModal').classList.add('hidden');
+            resourceToRename = null;
+        }
+
+        function confirmRenameResource() {
+            const newName = document.getElementById('newRenamedResourceName').value.trim();
+            const orgPath = document.getElementById('organizationalPath').value.trim();
+
+            if (!newName) {
+                showNotification('Please enter a new resource name', 'warning');
+                return;
+            }
+
+            const renamingCurrentScript = (currentScript === resourceToRename);
+
+            if (typeof mta !== 'undefined' && mta.triggerEvent) {
+                mta.triggerEvent("luaEditor.renameResource", resourceToRename, newName, orgPath);
+            }
+
+            if (renamingCurrentScript) {
+                window.pendingClearAfterRename = true;
+            }
+
+            hideRenameResourceModal();
+        }
+
+        let resourceToDelete = null;
+
+        function showDeleteResourceModal(resourceName) {
+            resourceToDelete = resourceName;
+            document.getElementById('deleteResourceName').textContent = resourceName;
+            document.getElementById('deleteResourceModal').classList.remove('hidden');
+        }
+
+        function hideDeleteResourceModal() {
+            document.getElementById('deleteResourceModal').classList.add('hidden');
+            resourceToDelete = null;
+        }
+
+        function confirmDeleteResource() {
+            if (!resourceToDelete) return;
+
+            const deletingCurrentScript = (currentScript === resourceToDelete);
+
+            if (typeof mta !== 'undefined' && mta.triggerEvent) {
+                mta.triggerEvent("luaEditor.deleteResource", resourceToDelete);
+            }
+
+            if (deletingCurrentScript) {
+                window.pendingClearAfterDelete = true;
+            }
+
+            hideDeleteResourceModal();
+        }
+
+        function onResourceDeleted(success, message) {
+            showNotification(message, success ? 'success' : 'error');
+
+            if (success) {
+                if (window.pendingClearAfterDelete) {
+                    window.pendingClearAfterDelete = false;
+                    currentScript = null;
+                    document.getElementById('currentResourceName').textContent = '';
+                    clearEditor();
+
+                    const fileList = document.getElementById('fileList');
+                    fileList.innerHTML = '';
+                    const noFiles = document.createElement('div');
+                    noFiles.className = 'no-selection';
+                    noFiles.setAttribute('data-lang', 'no_selection');
+                    noFiles.textContent = languages[currentLanguage]['no_selection'];
+                    fileList.appendChild(noFiles);
+                }
+                refreshScriptsList();
+            } else {
+                window.pendingClearAfterDelete = false;
+            }
+        }
+
+        function requestAndShowLogs() {
+            if (typeof mta !== 'undefined' && mta.triggerEvent) {
+                mta.triggerEvent("luaEditor.requestLogs");
+            }
+        }
+
+        function hideLogsViewer() {
+            document.getElementById('logsViewer').classList.add('hidden');
+        }
+
+        function receiveLogsData(logs) {
+            const tableBody = document.getElementById('logsTableBody');
+            tableBody.innerHTML = '';
+
+            if (!logs || logs.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px; color: #666;">No logs available</td></tr>';
+                document.getElementById('logsViewer').classList.remove('hidden');
+                return;
+            }
+
+            logs.forEach(log => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${log.date}</td>
+                    <td>${log.time}</td>
+                    <td>${log.player}</td>
+                    <td>${log.account}</td>
+                    <td><span class="logs-action ${log.action}">${log.action}</span></td>
+                    <td>${log.resource}</td>
+                    <td>${log.file}</td>
+                    <td>${log.details}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            document.getElementById('logsViewer').classList.remove('hidden');
         }
 
         function onFileSaved(success, message) {
@@ -1405,13 +2091,14 @@
             } else {
                 updateButtons();
             }
+            showNotification(message, success ? 'success' : 'error');
         }
 
         function onFileDeleted(success, message) {
+            showNotification(message, success ? 'success' : 'error');
             if (success && currentScript && typeof mta !== 'undefined' && mta.triggerEvent) {
                 mta.triggerEvent("luaEditor.requestScriptFiles", currentScript);
                 clearEditor();
-                
                 setTimeout(() => {
                     mta.triggerEvent("luaEditor.requestScriptsList");
                 }, 500);
@@ -1419,24 +2106,56 @@
         }
 
         function onFileCreated(success, message) {
+            showNotification(message, success ? 'success' : 'error');
             if (success && currentScript && typeof mta !== 'undefined' && mta.triggerEvent) {
                 mta.triggerEvent("luaEditor.requestScriptFiles", currentScript);
-                
                 setTimeout(() => {
                     mta.triggerEvent("luaEditor.requestScriptsList");
                 }, 500);
             }
         }
 
+        function onResourceCreated(success, message, resourceName) {
+            showNotification(message, success ? 'success' : 'error');
+            if (success) {
+                refreshScriptsList();
+            }
+        }
+
+        function onResourceRenamed(success, message) {
+            showNotification(message, success ? 'success' : 'error');
+            if (success) {
+                if (window.pendingClearAfterRename) {
+                    window.pendingClearAfterRename = false;
+                    currentScript = null;
+                    document.getElementById('currentResourceName').textContent = '';
+                    clearEditor();
+
+                    const fileList = document.getElementById('fileList');
+                    fileList.innerHTML = '';
+                    const noFiles = document.createElement('div');
+                    noFiles.className = 'no-selection';
+                    noFiles.setAttribute('data-lang', 'no_selection');
+                    noFiles.textContent = languages[currentLanguage]['no_selection'];
+                    fileList.appendChild(noFiles);
+                }
+                refreshScriptsList();
+            } else {
+                window.pendingClearAfterRename = false;
+            }
+        }
+
         function receiveFileContent(content) {
             if (codeMirrorEditor) {
                 codeMirrorEditor.setValue(content || '');
-                codeMirrorEditor.setOption('readOnly', currentFile && currentFile.compiled);
-                
+
+                const isReadOnly = currentFile && currentFile.compiled;
+                codeMirrorEditor.setOption('readOnly', isReadOnly);
+
                 setTimeout(() => {
                     codeMirrorEditor.refresh();
                 }, 100);
-                
+
                 originalCode = content || '';
                 isModified = false;
                 updateCharCount();
@@ -1445,10 +2164,21 @@
             }
         }
 
+        window.setDefaultLanguage = setDefaultLanguage;
+        window.loadScriptFiles = loadScriptFiles;
+        window.receiveFileContent = receiveFileContent;
+        window.onFileSaved = onFileSaved;
+        window.onFileDeleted = onFileDeleted;
+        window.onFileCreated = onFileCreated;
+        window.onResourceCreated = onResourceCreated;
+        window.onResourceRenamed = onResourceRenamed;
+        window.onResourceDeleted = onResourceDeleted;
+        window.receiveLogsData = receiveLogsData;
+
         document.addEventListener('DOMContentLoaded', function() {
             initCodeMirror();
             updateCharCount();
-            
+
             if (typeof mta !== 'undefined' && mta.triggerEvent) {
                 setTimeout(() => {
                     mta.triggerEvent("luaEditor.requestScriptsList");

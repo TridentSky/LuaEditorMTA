@@ -1,9 +1,9 @@
 ------------------------------------------------------------------------------------------------
 --
---  PROJECT:         Trident Sky Company
---  VERSION:         2.6
+--  PROJECT:         Lua Editor MTA:SA
+--  VERSION:         3.0
 --  FILE:            editorC.lua
---  PURPOSE:         Lua Code Editor Client-side Enhanced
+--  PURPOSE:         Lua Code Editor Client-side Enhanced with Advanced Features
 --  DEVELOPERS:      [BranD] - Lead Developer
 --  CONTACT:         tridentskycompany@gmail.com | Discord: BrandSilva
 --  COPYRIGHT:       © 2025 Brando Silva All rights reserved.
@@ -15,6 +15,7 @@
 local editorBrowser = nil
 local editorGui = nil
 local isMinimized = false
+local defaultLanguage = "en"
 
 function createEditorPanel()
     if (editorGui) then
@@ -22,10 +23,10 @@ function createEditorPanel()
         editorGui = nil
         editorBrowser = nil
     end
-    
+
     local screenW, screenH = guiGetScreenSize()
     editorGui = guiCreateBrowser(0, 0, screenW, screenH, true, true, false)
-    
+
     if (editorGui) then
         editorBrowser = guiGetBrowser(editorGui)
         addEventHandler("onClientBrowserCreated", editorGui, onBrowserCreated)
@@ -34,7 +35,7 @@ function createEditorPanel()
         showCursor(true)
         return true
     end
-    
+
     return false
 end
 
@@ -42,6 +43,12 @@ function onBrowserCreated()
     if (editorBrowser) then
         loadBrowserURL(editorBrowser, "http://mta/local/index.html")
         focusBrowser(editorBrowser)
+
+        setTimer(function()
+            if (editorBrowser and guiGetVisible(editorGui)) then
+                executeBrowserJavascript(editorBrowser, 'setDefaultLanguage("' .. defaultLanguage .. '");')
+            end
+        end, 500, 1)
     end
 end
 
@@ -49,7 +56,7 @@ function openEditorPanel(scripts)
     if (not editorGui) then
         if (createEditorPanel()) then
             setTimer(function()
-                if (editorBrowser and guiGetVisible(editorGui)) then
+                if (editorBrowser) then
                     loadScriptsList(scripts)
                 end
             end, 2000, 1)
@@ -61,19 +68,19 @@ function openEditorPanel(scripts)
             showCursor(true)
             focusBrowser(editorBrowser)
             isMinimized = false
-            loadScriptsList(scripts)
         end
+        loadScriptsList(scripts)
     end
 end
 
 function loadScriptsList(scripts)
-    if (not editorBrowser or not guiGetVisible(editorGui)) then return end
-    
+    if (not editorBrowser) then return end
+
     if (scripts and #scripts > 0) then
         local jsArray = "["
         for i, script in ipairs(scripts) do
             if (i > 1) then jsArray = jsArray .. "," end
-            
+
             local clientFiles = "["
             if (script.clientFiles) then
                 for j, file in ipairs(script.clientFiles) do
@@ -82,7 +89,7 @@ function loadScriptsList(scripts)
                 end
             end
             clientFiles = clientFiles .. "]"
-            
+
             local serverFiles = "["
             if (script.serverFiles) then
                 for j, file in ipairs(script.serverFiles) do
@@ -91,7 +98,7 @@ function loadScriptsList(scripts)
                 end
             end
             serverFiles = serverFiles .. "]"
-            
+
             local sharedFiles = "["
             if (script.sharedFiles) then
                 for j, file in ipairs(script.sharedFiles) do
@@ -100,7 +107,7 @@ function loadScriptsList(scripts)
                 end
             end
             sharedFiles = sharedFiles .. "]"
-            
+
             jsArray = jsArray .. '{'
             jsArray = jsArray .. 'name:"' .. script.name .. '",'
             jsArray = jsArray .. 'clientFiles:' .. clientFiles .. ','
@@ -109,25 +116,25 @@ function loadScriptsList(scripts)
             jsArray = jsArray .. '}'
         end
         jsArray = jsArray .. "]"
-        
+
         executeBrowserJavascript(editorBrowser, "loadScriptsList(" .. jsArray .. ");")
     end
 end
 
 function loadScriptFiles(scriptName, files)
     if (not editorBrowser or not guiGetVisible(editorGui)) then return end
-    
+
     if (not files or #files == 0) then
         executeBrowserJavascript(editorBrowser, "loadScriptFiles('" .. scriptName .. "', []);")
         return
     end
-    
+
     local jsArray = "["
     for i, file in ipairs(files) do
         if (i > 1) then jsArray = jsArray .. "," end
-        
+
         local isCompiled = string.find(file.path, "%.luac$") ~= nil
-        
+
         jsArray = jsArray .. '{'
         jsArray = jsArray .. 'path:"' .. file.path .. '",'
         jsArray = jsArray .. 'type:"' .. file.type .. '",'
@@ -135,15 +142,59 @@ function loadScriptFiles(scriptName, files)
         jsArray = jsArray .. '}'
     end
     jsArray = jsArray .. "]"
-    
+
     executeBrowserJavascript(editorBrowser, "loadScriptFiles('" .. scriptName .. "', " .. jsArray .. ");")
 end
 
 function sendFileContent(content)
     if (not editorBrowser or not guiGetVisible(editorGui)) then return end
-    
-    local escapedContent = content:gsub("\\", "\\\\"):gsub("\"", "\\\""):gsub("\n", "\\n"):gsub("\r", "")
+
+    local escapedContent = content:gsub("\\", "\\\\"):gsub("\"", "\\\""):gsub("\n", "\\n"):gsub("\r", ""):gsub("<", "\\x3C"):gsub(">", "\\x3E")
     executeBrowserJavascript(editorBrowser, 'receiveFileContent("' .. escapedContent .. '");')
+end
+
+function sendLogsData(logs)
+    if (not editorBrowser or not guiGetVisible(editorGui)) then return end
+
+    if (not logs or #logs == 0) then
+        executeBrowserJavascript(editorBrowser, "receiveLogsData([]);")
+        return
+    end
+
+    local jsArray = "["
+    for i, log in ipairs(logs) do
+        if (i > 1) then jsArray = jsArray .. "," end
+
+        local player = log.player or "Unknown"
+        local account = log.account or "Unknown"
+        local action = log.action or "Unknown"
+        local resource = log.resource or "N/A"
+        local file = log.file or "N/A"
+        local details = log.details or ""
+        local date = log.date or "N/A"
+        local time = log.time or "N/A"
+
+        player = player:gsub("\\", "\\\\"):gsub("\"", "\\\""):gsub("<", "&lt;"):gsub(">", "&gt;"):gsub("&", "&amp;")
+        account = account:gsub("\\", "\\\\"):gsub("\"", "\\\""):gsub("<", "&lt;"):gsub(">", "&gt;"):gsub("&", "&amp;")
+        action = action:gsub("\\", "\\\\"):gsub("\"", "\\\""):gsub("<", "&lt;"):gsub(">", "&gt;"):gsub("&", "&amp;")
+        resource = resource:gsub("\\", "\\\\"):gsub("\"", "\\\""):gsub("<", "&lt;"):gsub(">", "&gt;"):gsub("&", "&amp;")
+        file = file:gsub("\\", "\\\\"):gsub("\"", "\\\""):gsub("<", "&lt;"):gsub(">", "&gt;"):gsub("&", "&amp;")
+        details = details:gsub("\\", "\\\\"):gsub("\"", "\\\""):gsub("<", "&lt;"):gsub(">", "&gt;"):gsub("&", "&amp;")
+
+        jsArray = jsArray .. '{'
+        jsArray = jsArray .. 'player:"' .. player .. '",'
+        jsArray = jsArray .. 'account:"' .. account .. '",'
+        jsArray = jsArray .. 'action:"' .. action .. '",'
+        jsArray = jsArray .. 'resource:"' .. resource .. '",'
+        jsArray = jsArray .. 'file:"' .. file .. '",'
+        jsArray = jsArray .. 'details:"' .. details .. '",'
+        jsArray = jsArray .. 'date:"' .. date .. '",'
+        jsArray = jsArray .. 'time:"' .. time .. '"'
+        jsArray = jsArray .. '}'
+    end
+    jsArray = jsArray .. "]"
+
+    executeBrowserJavascript(editorBrowser, "receiveLogsData(" .. jsArray .. ");")
 end
 
 function closePanel()
@@ -225,6 +276,36 @@ end
 addEvent("luaEditor.createFile", true)
 addEventHandler("luaEditor.createFile", root, createFile)
 
+function createResource(resourceName, organizationalDir)
+    if (resourceName and resourceName ~= "") then
+        triggerServerEvent("luaEditor.createResource", localPlayer, resourceName, organizationalDir)
+    end
+end
+addEvent("luaEditor.createResource", true)
+addEventHandler("luaEditor.createResource", root, createResource)
+
+function renameResource(oldResourceName, newResourceName, organizationalPath)
+    if (oldResourceName and newResourceName and oldResourceName ~= "" and newResourceName ~= "") then
+        triggerServerEvent("luaEditor.renameResource", localPlayer, oldResourceName, newResourceName, organizationalPath)
+    end
+end
+addEvent("luaEditor.renameResource", true)
+addEventHandler("luaEditor.renameResource", root, renameResource)
+
+function requestLogs()
+    triggerServerEvent("luaEditor.requestLogs", localPlayer)
+end
+addEvent("luaEditor.requestLogs", true)
+addEventHandler("luaEditor.requestLogs", root, requestLogs)
+
+function deleteResource(resourceName)
+    if (resourceName and resourceName ~= "") then
+        triggerServerEvent("luaEditor.deleteResource", localPlayer, resourceName)
+    end
+end
+addEvent("luaEditor.deleteResource", true)
+addEventHandler("luaEditor.deleteResource", root, deleteResource)
+
 function onScriptsListReceived(scripts)
     openEditorPanel(scripts)
 end
@@ -269,3 +350,36 @@ function onFileCreated(success, message)
 end
 addEvent("luaEditor.onFileCreated", true)
 addEventHandler("luaEditor.onFileCreated", localPlayer, onFileCreated)
+
+function onResourceCreated(success, message)
+    if (editorBrowser and guiGetVisible(editorGui)) then
+        local jsMessage = message:gsub("\\", "\\\\"):gsub("\"", "\\\"")
+        executeBrowserJavascript(editorBrowser, 'onResourceCreated(' .. (success and "true" or "false") .. ', "' .. jsMessage .. '");')
+    end
+end
+addEvent("luaEditor.onResourceCreated", true)
+addEventHandler("luaEditor.onResourceCreated", localPlayer, onResourceCreated)
+
+function onResourceRenamed(success, message)
+    if (editorBrowser and guiGetVisible(editorGui)) then
+        local jsMessage = message:gsub("\\", "\\\\"):gsub("\"", "\\\"")
+        executeBrowserJavascript(editorBrowser, 'onResourceRenamed(' .. (success and "true" or "false") .. ', "' .. jsMessage .. '");')
+    end
+end
+addEvent("luaEditor.onResourceRenamed", true)
+addEventHandler("luaEditor.onResourceRenamed", localPlayer, onResourceRenamed)
+
+function onResourceDeleted(success, message)
+    if (editorBrowser and guiGetVisible(editorGui)) then
+        local jsMessage = message:gsub("\\", "\\\\"):gsub("\"", "\\\"")
+        executeBrowserJavascript(editorBrowser, 'onResourceDeleted(' .. (success and "true" or "false") .. ', "' .. jsMessage .. '");')
+    end
+end
+addEvent("luaEditor.onResourceDeleted", true)
+addEventHandler("luaEditor.onResourceDeleted", localPlayer, onResourceDeleted)
+
+function onLogsReceived(logs)
+    sendLogsData(logs)
+end
+addEvent("luaEditor.onLogsReceived", true)
+addEventHandler("luaEditor.onLogsReceived", localPlayer, onLogsReceived)
