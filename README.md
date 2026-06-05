@@ -6,7 +6,7 @@
 
 **FORUM:** [In-Game Lua Editor - MTA:SA](https://forum.multitheftauto.com/topic/146355-professional-in-game-lua-editor-free-release/)
 
-**VIDEO DEMO:** [[Watch on YouTube]](https://youtu.be/qqVed1QIco8)
+**VIDEO DEMO:** [[Watch on YouTube]](https://youtu.be/mc87jbFDJIk)
 
 **DISCORD:** [Join the community](https://discord.gg/mjWuv7Zbyh)
 
