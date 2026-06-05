@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lua Editor MTA:SA v3.0</title>
+    <title>Lua Editor MTA:SA v4.0</title>
     <link rel="stylesheet" href="CodeMirror/codemirror.min.css">
     <link rel="stylesheet" href="CodeMirror/material-darker.min.css">
     <script src="CodeMirror/codemirror.min.js"></script>
@@ -15,6 +15,16 @@
             box-sizing: border-box;
         }
 
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
         body {
             font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
             background: transparent;
@@ -23,35 +33,36 @@
         }
 
         .panel-container {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: min(1200px, 85vw);
-            height: min(750px, 80vh);
-            background: #2d2d2d;
-            border: 1px solid #4a4a4a;
-            border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 1180px;
+            height: 720px;
+            background: #1e1e2e;
+            border: 1px solid #313244;
+            border-radius: 10px;
+            box-shadow: 0 14px 40px rgba(0, 0, 0, 0.65);
             display: flex;
             flex-direction: column;
-            transition: all 0.3s ease;
+            overflow: hidden;
         }
 
         .panel-header {
-            background: #3c3c3c;
-            padding: 10px 15px;
+            background: #181825;
+            padding: 10px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid #4a4a4a;
-            border-radius: 8px 8px 0 0;
+            border-bottom: 1px solid #313244;
+            cursor: move;
+            user-select: none;
         }
 
         .panel-title {
             font-size: 14px;
-            font-weight: bold;
-            color: #ffffff;
+            font-weight: 600;
+            color: #cdd6f4;
+            letter-spacing: 0.3px;
         }
 
         .panel-controls {
@@ -67,23 +78,23 @@
 
         .lang-btn {
             padding: 4px 8px;
-            background: #4a4a4a;
-            color: #ffffff;
+            background: #313244;
+            color: #cdd6f4;
             border: none;
-            border-radius: 3px;
+            border-radius: 4px;
             cursor: pointer;
             font-size: 10px;
-            font-weight: bold;
-            transition: all 0.2s ease;
+            font-weight: 600;
+            transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
         }
 
         .lang-btn.active {
-            background: #4CAF50;
-            color: #000;
+            background: #89b4fa;
+            color: #11111b;
         }
 
         .lang-btn:hover {
-            background: #666;
+            background: #45475a;
         }
 
         .control-btn {
@@ -94,7 +105,7 @@
             cursor: pointer;
             font-size: 12px;
             font-weight: bold;
-            transition: all 0.2s ease;
+            transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
         }
 
         .minimize-btn {
@@ -114,27 +125,28 @@
         .panel-content {
             flex: 1;
             display: flex;
-            height: calc(100% - 50px);
+            min-height: 0;
         }
 
         .sidebar {
-            width: 220px;
-            background: #252525;
-            border-right: 1px solid #4a4a4a;
+            width: 240px;
+            background: #181825;
+            border-right: 1px solid #313244;
             display: flex;
             flex-direction: column;
         }
 
         .sidebar-section {
-            padding: 10px;
-            border-bottom: 1px solid #4a4a4a;
+            padding: 12px;
+            border-bottom: 1px solid #313244;
         }
 
         .sidebar-section h3 {
             font-size: 11px;
-            color: #cccccc;
+            color: #a6adc8;
             margin-bottom: 8px;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .search-container {
@@ -145,27 +157,32 @@
         .script-search {
             width: 100%;
             padding: 6px 8px;
-            background: #3c3c3c;
-            border: 1px solid #4a4a4a;
-            border-radius: 4px;
-            color: #ffffff;
+            background: #11111b;
+            border: 1px solid #313244;
+            border-radius: 5px;
+            color: #cdd6f4;
             font-size: 11px;
+            outline: none;
+        }
+
+        .script-search:focus {
+            border-color: #89b4fa;
         }
 
         .script-list {
-            max-height: 120px;
+            max-height: 130px;
             overflow-y: auto;
-            border: 1px solid #4a4a4a;
-            border-radius: 4px;
-            background: #3c3c3c;
+            border: 1px solid #313244;
+            border-radius: 5px;
+            background: #11111b;
         }
 
         .script-item {
             padding: 6px 8px;
             cursor: pointer;
             font-size: 11px;
-            color: #ffffff;
-            border-bottom: 1px solid #4a4a4a;
+            color: #cdd6f4;
+            border-bottom: 1px solid #313244;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -176,13 +193,13 @@
         }
 
         .script-item:hover {
-            background: #4a4a4a;
+            background: #313244;
         }
 
         .script-item.selected {
-            background: #4CAF50;
-            color: #000;
-            font-weight: bold;
+            background: #89b4fa;
+            color: #11111b;
+            font-weight: 600;
         }
 
         .script-name {
@@ -193,12 +210,13 @@
         }
 
         .script-actions {
-            display: none;
+            display: flex;
             gap: 3px;
+            visibility: hidden;
         }
 
         .script-item:hover .script-actions {
-            display: flex;
+            visibility: visible;
         }
 
         .script-action-btn {
@@ -211,7 +229,7 @@
             cursor: pointer;
             font-size: 9px;
             font-weight: bold;
-            transition: all 0.2s ease;
+            transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
         }
 
         .script-action-btn:hover {
@@ -254,27 +272,28 @@
 
         .sidebar-action-btn {
             width: 100%;
-            padding: 5px 8px;
-            background: #2196F3;
-            color: #fff;
+            padding: 6px 8px;
+            background: #313244;
+            color: #cdd6f4;
             border: none;
-            border-radius: 3px;
+            border-radius: 5px;
             cursor: pointer;
             font-size: 10px;
-            font-weight: bold;
-            transition: all 0.2s ease;
+            font-weight: 600;
+            transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
         }
 
         .sidebar-action-btn:hover {
-            background: #1976D2;
+            background: #45475a;
         }
 
         .sidebar-action-btn.logs {
-            background: #FF9800;
+            background: #313244;
+            color: #f9e2af;
         }
 
         .sidebar-action-btn.logs:hover {
-            background: #F57C00;
+            background: #45475a;
         }
 
         .file-tree {
@@ -293,35 +312,37 @@
         }
 
         .create-file-section {
-            background: #333;
-            border: 1px solid #4a4a4a;
-            border-radius: 4px;
+            background: #11111b;
+            border: 1px solid #313244;
+            border-radius: 6px;
             padding: 8px;
             margin-bottom: 10px;
         }
 
         .create-file-title {
             font-size: 10px;
-            color: #4CAF50;
+            color: #a6adc8;
             margin-bottom: 6px;
-            font-weight: bold;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .create-file-btn {
             width: 100%;
-            padding: 5px 8px;
-            background: #4CAF50;
-            color: #000;
+            padding: 6px 8px;
+            background: #a6e3a1;
+            color: #11111b;
             border: none;
-            border-radius: 3px;
+            border-radius: 5px;
             cursor: pointer;
             font-size: 10px;
-            font-weight: bold;
-            transition: all 0.2s ease;
+            font-weight: 600;
+            transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
         }
 
         .create-file-btn:hover {
-            background: #45a049;
+            background: #94d68f;
         }
 
         .file-list-container {
@@ -329,11 +350,12 @@
         }
 
         .file-item {
-            padding: 5px 0;
+            padding: 5px 6px;
             cursor: pointer;
             font-size: 12px;
-            color: #ffffff;
-            transition: color 0.2s ease;
+            color: #cdd6f4;
+            border-radius: 4px;
+            transition: background 0.15s ease, color 0.15s ease;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -343,34 +365,62 @@
         }
 
         .file-item:hover {
-            color: #4CAF50;
+            background: #313244;
         }
 
         .file-item.client {
-            color: #4CAF50;
+            color: #a6e3a1;
         }
 
         .file-item.server {
-            color: #FF9800;
+            color: #fab387;
         }
 
         .file-item.shared {
-            color: #2196F3;
+            color: #89b4fa;
+        }
+
+        .file-item.html {
+            color: #f38ba8;
+        }
+
+        .file-item.map {
+            color: #f9e2af;
         }
 
         .file-item.meta {
-            color: #9C27B0;
+            color: #cba6f7;
             font-style: italic;
         }
 
         .file-item.compiled {
-            color: #9E9E9E;
+            color: #6c7086;
             font-style: italic;
         }
 
+        .file-item.companion {
+            margin-left: 14px;
+            color: #94e2d5;
+            font-style: normal;
+        }
+
+        .companion-tag {
+            flex-shrink: 0;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #11111b;
+            background: #94e2d5;
+            padding: 1px 5px;
+            border-radius: 3px;
+            margin-left: 6px;
+        }
+
         .file-item.active {
-            color: #4CAF50;
-            font-weight: bold;
+            background: #313244;
+            font-weight: 600;
+            box-shadow: inset 2px 0 0 #89b4fa;
         }
 
         .file-name {
@@ -390,7 +440,7 @@
             font-size: 10px;
             font-weight: bold;
             margin-left: 5px;
-            transition: all 0.2s ease;
+            transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
             opacity: 0;
         }
 
@@ -435,39 +485,49 @@
         }
 
         .editor-tabs {
-            background: #3c3c3c;
+            background: #181825;
             padding: 8px 15px;
-            border-bottom: 1px solid #4a4a4a;
+            border-bottom: 1px solid #313244;
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
 
         .tab {
-            padding: 5px 12px;
-            background: #252525;
-            border-radius: 4px;
+            padding: 5px 14px;
+            background: #11111b;
+            border: 1px solid #313244;
+            border-radius: 6px;
             font-size: 12px;
+            color: #cdd6f4;
             cursor: pointer;
-            transition: all 0.2s ease;
-            max-width: 200px;
+            transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+            max-width: 240px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
 
         .tab.active {
-            background: #4CAF50;
-            color: #000;
+            background: #313244;
+            color: #cdd6f4;
+            border-color: #89b4fa;
         }
 
         .tab.compiled {
-            background: #9E9E9E;
-            color: #000;
+            background: #313244;
+            color: #6c7086;
         }
 
         .tab.meta {
-            background: #9C27B0;
-            color: #fff;
+            background: #313244;
+            color: #cba6f7;
+            border-color: #cba6f7;
+        }
+
+        .tab.map {
+            background: #313244;
+            color: #f9e2af;
+            border-color: #f9e2af;
         }
 
         .editor-wrapper {
@@ -511,23 +571,47 @@
         }
 
         .CodeMirror-gutters {
-            background: #2d2d2d !important;
-            border-right: 1px solid #4a4a4a !important;
+            background: #181825 !important;
+            border-right: 1px solid #313244 !important;
         }
 
         .CodeMirror-linenumber {
-            color: #666 !important;
+            color: #6c7086 !important;
         }
 
         .editor-footer {
-            background: #3c3c3c;
+            background: #181825;
             padding: 8px 15px;
-            border-top: 1px solid #4a4a4a;
+            border-top: 1px solid #313244;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-size: 11px;
             position: relative;
+        }
+
+        .save-options {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-right: 4px;
+            color: #a6adc8;
+            font-size: 11px;
+            user-select: none;
+        }
+
+        .save-options label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+
+        .save-options input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
+            accent-color: #89b4fa;
         }
 
         .notification {
@@ -542,7 +626,7 @@
             font-size: 11px;
             font-weight: bold;
             opacity: 0;
-            transition: all 0.3s ease;
+            transition: opacity 0.25s ease, top 0.25s ease;
             z-index: 1000;
             white-space: nowrap;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -565,6 +649,18 @@
 
         .status-info {
             color: #cccccc;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #fileStatus {
+            display: inline-block;
+            min-width: 130px;
+        }
+
+        .status-icon {
+            display: inline-block;
+            width: 14px;
+            text-align: center;
         }
 
         .action-buttons {
@@ -573,48 +669,54 @@
         }
 
         .action-btn {
-            padding: 6px 12px;
-            background: #4CAF50;
-            color: #000;
+            padding: 7px 16px;
+            min-width: 72px;
+            text-align: center;
+            background: #89b4fa;
+            color: #11111b;
             border: none;
-            border-radius: 4px;
+            border-radius: 5px;
             cursor: pointer;
             font-size: 11px;
-            font-weight: bold;
-            transition: all 0.2s ease;
+            font-weight: 600;
+            transition: background 0.15s ease, color 0.15s ease;
         }
 
         .action-btn:hover {
-            background: #45a049;
+            background: #74a0e8;
         }
 
         .action-btn:disabled {
-            background: #4a4a4a;
-            color: #888;
+            background: #313244;
+            color: #6c7086;
             cursor: not-allowed;
         }
 
         .action-btn.secondary {
-            background: #2196F3;
-            color: #fff;
+            background: #313244;
+            color: #cdd6f4;
         }
 
         .action-btn.secondary:hover {
-            background: #1976D2;
+            background: #45475a;
         }
 
         .modal {
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: #2d2d2d;
-            border: 1px solid #4a4a4a;
-            border-radius: 8px;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            margin: auto;
+            width: 360px;
+            height: -moz-fit-content;
+            height: fit-content;
+            background: #1e1e2e;
+            border: 1px solid #313244;
+            border-radius: 10px;
             padding: 20px;
             z-index: 2000;
-            min-width: 300px;
-            max-width: 400px;
+            box-shadow: 0 14px 40px rgba(0, 0, 0, 0.6);
         }
 
         .modal-title {
@@ -631,21 +733,26 @@
         .modal-input {
             width: 100%;
             padding: 8px;
-            background: #3c3c3c;
-            border: 1px solid #4a4a4a;
-            border-radius: 4px;
-            color: #ffffff;
+            background: #11111b;
+            border: 1px solid #313244;
+            border-radius: 5px;
+            color: #cdd6f4;
             font-size: 12px;
             margin-bottom: 10px;
+            outline: none;
+        }
+
+        .modal-input:focus {
+            border-color: #89b4fa;
         }
 
         .modal-select {
             width: 100%;
             padding: 8px;
-            background: #3c3c3c;
-            border: 1px solid #4a4a4a;
-            border-radius: 4px;
-            color: #ffffff;
+            background: #11111b;
+            border: 1px solid #313244;
+            border-radius: 5px;
+            color: #cdd6f4;
             font-size: 12px;
         }
 
@@ -662,7 +769,7 @@
             cursor: pointer;
             font-size: 12px;
             font-weight: bold;
-            transition: all 0.2s ease;
+            transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
         }
 
         .modal-btn.confirm {
@@ -689,18 +796,22 @@
 
         .logs-viewer {
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: #2d2d2d;
-            border: 1px solid #4a4a4a;
-            border-radius: 8px;
-            padding: 15px;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            margin: auto;
+            width: 640px;
+            height: -moz-fit-content;
+            height: fit-content;
+            max-height: 420px;
+            background: #1e1e2e;
+            border: 1px solid #313244;
+            border-radius: 10px;
+            padding: 16px;
             z-index: 2500;
-            width: 50vw;
-            max-width: 600px;
-            max-height: 50vh;
             overflow-y: auto;
+            box-shadow: 0 14px 40px rgba(0, 0, 0, 0.6);
         }
 
         .logs-header {
@@ -813,7 +924,7 @@
     <div class="panel-container" id="panel">
         <div class="panel-header">
             <div class="panel-title">
-                <span data-lang="title">Lua Editor MTA:SA v3.0</span>
+                <span data-lang="title">Lua Editor MTA:SA v4.0</span>
                 <span id="currentResourceName" style="margin-left: 15px; color: #4CAF50; font-size: 11px;"></span>
             </div>
             <div class="panel-controls">
@@ -885,7 +996,7 @@
                     </div>
 
                     <div class="copyright">
-                        <div>© 2025 <span class="brand">BranD</span></div>
+                        <div>© 2026 <span class="brand">BranD</span></div>
                         <div><span class="company">Trident Sky</span></div>
                     </div>
                 </div>
@@ -912,6 +1023,12 @@
                         <span style="margin-left: 15px;" id="fileStatus"></span>
                     </div>
                     <div class="action-buttons">
+                        <div class="save-options">
+                            <label title="Restart resource after saving">
+                                <input type="checkbox" id="restartOnSave">
+                                <span data-lang="restart_on_save">Restart on save</span>
+                            </label>
+                        </div>
                         <button class="action-btn secondary" onclick="copyCode(event)" data-lang="copy">Copy</button>
                         <button class="action-btn" onclick="sendCode(event)" data-lang="send" disabled>Send</button>
                     </div>
@@ -958,6 +1075,10 @@
                     <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: #ffffff; font-size: 12px;">
                         <input type="radio" name="fileType" value="html" style="cursor: pointer;">
                         <span>HTML</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: #ffffff; font-size: 12px;">
+                        <input type="radio" name="fileType" value="map" style="cursor: pointer;">
+                        <span>Map (.map)</span>
                     </label>
                 </div>
             </div>
@@ -1046,7 +1167,7 @@
     <script>
         const languages = {
             es: {
-                title: "Editor Lua MTA:SA v3.0",
+                title: "Editor Lua MTA:SA v4.0",
                 scripts: "Scripts",
                 files: "Archivos",
                 size: "Tamaño",
@@ -1055,12 +1176,17 @@
                 characters: "Caracteres",
                 copy: "Copiar",
                 send: "Enviar",
+                restart_on_save: "Reiniciar al guardar",
                 copied: "¡Copiado!",
                 sent: "¡Enviado!",
                 no_selection: "Selecciona un script de la lista",
                 no_file_selected: "Ningún archivo seleccionado",
                 loading: "Cargando scripts...",
                 compiled_file: "Archivo compilado (solo lectura)",
+                companion_note: "Fuente compañera — recompila para aplicar; reiniciar no actualiza el compilado",
+                source_tag: "fuente",
+                modified: "Modificado",
+                synchronized: "Sincronizado",
                 create_file: "Crear Nuevo Archivo",
                 create_btn: "+ Crear Archivo",
                 confirm_delete: "Confirmar Eliminación",
@@ -1084,6 +1210,8 @@
                 current_name: "Actual:",
                 new_name_label: "Nuevo Nombre:",
                 new_resource_name: "Ingresa nuevo nombre del recurso",
+                enter_resource_name: "Por favor ingresa un nombre de recurso",
+                enter_new_resource_name: "Por favor ingresa un nuevo nombre de recurso",
                 organizational_path_label: "Ruta Organizacional (Opcional):",
                 organizational_path: "ej. misScripts (opcional)",
                 rename: "Renombrar",
@@ -1103,7 +1231,7 @@
                 editing: "Editando"
             },
             pt: {
-                title: "Editor Lua MTA:SA v3.0",
+                title: "Editor Lua MTA:SA v4.0",
                 scripts: "Scripts",
                 files: "Arquivos",
                 size: "Tamanho",
@@ -1112,12 +1240,17 @@
                 characters: "Caracteres",
                 copy: "Copiar",
                 send: "Enviar",
+                restart_on_save: "Reiniciar ao salvar",
                 copied: "Copiado!",
                 sent: "Enviado!",
                 no_selection: "Selecione um script da lista",
                 no_file_selected: "Nenhum arquivo selecionado",
                 loading: "Carregando scripts...",
                 compiled_file: "Arquivo compilado (somente leitura)",
+                companion_note: "Fonte companheira — recompile para aplicar; reiniciar não atualiza o compilado",
+                source_tag: "fonte",
+                modified: "Modificado",
+                synchronized: "Sincronizado",
                 create_file: "Criar Novo Arquivo",
                 create_btn: "+ Criar Arquivo",
                 confirm_delete: "Confirmar Exclusão",
@@ -1141,6 +1274,8 @@
                 current_name: "Atual:",
                 new_name_label: "Novo Nome:",
                 new_resource_name: "Digite o novo nome do recurso",
+                enter_resource_name: "Por favor digite um nome de recurso",
+                enter_new_resource_name: "Por favor digite um novo nome de recurso",
                 organizational_path_label: "Caminho Organizacional (Opcional):",
                 organizational_path: "ex. meusScripts (opcional)",
                 rename: "Renomear",
@@ -1156,7 +1291,7 @@
                 logs_details: "Detalhes"
             },
             en: {
-                title: "Lua Editor MTA:SA v3.0",
+                title: "Lua Editor MTA:SA v4.0",
                 scripts: "Scripts",
                 files: "Files",
                 size: "Size",
@@ -1165,12 +1300,17 @@
                 characters: "Characters",
                 copy: "Copy",
                 send: "Send",
+                restart_on_save: "Restart on save",
                 copied: "Copied!",
                 sent: "Sent!",
                 no_selection: "Select a script from the list",
                 no_file_selected: "No file selected",
                 loading: "Loading scripts...",
                 compiled_file: "Compiled file (read-only)",
+                companion_note: "Source companion — recompile to apply; restart won't update the compiled file",
+                source_tag: "source",
+                modified: "Modified",
+                synchronized: "Synchronized",
                 create_file: "Create New File",
                 create_btn: "+ Create File",
                 confirm_delete: "Confirm Delete",
@@ -1194,6 +1334,8 @@
                 current_name: "Current:",
                 new_name_label: "New Name:",
                 new_resource_name: "Enter new resource name",
+                enter_resource_name: "Please enter a resource name",
+                enter_new_resource_name: "Please enter a new resource name",
                 organizational_path_label: "Organizational Path (Optional):",
                 organizational_path: "e.g. myScripts (optional)",
                 rename: "Rename",
@@ -1209,7 +1351,7 @@
                 logs_details: "Details"
             },
             tr: {
-                title: "Lua Editörü MTA:SA v3.0",
+                title: "Lua Editörü MTA:SA v4.0",
                 scripts: "Scriptler",
                 files: "Dosyalar",
                 size: "Boyut",
@@ -1218,12 +1360,17 @@
                 characters: "Karakterler",
                 copy: "Kopyala",
                 send: "Gönder",
+                restart_on_save: "Kaydedince yeniden başlat",
                 copied: "Kopyalandı!",
                 sent: "Gönderildi!",
                 no_selection: "Listeden bir script seçin",
                 no_file_selected: "Dosya seçilmedi",
                 loading: "Scriptler yükleniyor...",
                 compiled_file: "Derlenmiş dosya (salt okunur)",
+                companion_note: "Kaynak eşi — uygulamak için yeniden derleyin; yeniden başlatma derlenmiş dosyayı güncellemez",
+                source_tag: "kaynak",
+                modified: "Değiştirildi",
+                synchronized: "Senkronize",
                 create_file: "Yeni Dosya Oluştur",
                 create_btn: "+ Dosya Oluştur",
                 confirm_delete: "Silmeyi Onayla",
@@ -1247,6 +1394,8 @@
                 current_name: "Mevcut:",
                 new_name_label: "Yeni Ad:",
                 new_resource_name: "Yeni kaynak adını girin",
+                enter_resource_name: "Lütfen bir kaynak adı girin",
+                enter_new_resource_name: "Lütfen yeni bir kaynak adı girin",
                 organizational_path_label: "Organizasyonel Yol (İsteğe Bağlı):",
                 organizational_path: "örn. benimScriptlerim (isteğe bağlı)",
                 rename: "Yeniden Adlandır",
@@ -1262,7 +1411,7 @@
                 logs_details: "Detaylar"
             },
             ar: {
-                title: "محرر لوا MTA:SA v3.0",
+                title: "محرر لوا MTA:SA v4.0",
                 scripts: "السكريبتات",
                 files: "الملفات",
                 size: "الحجم",
@@ -1271,12 +1420,17 @@
                 characters: "الأحرف",
                 copy: "نسخ",
                 send: "إرسال",
+                restart_on_save: "إعادة التشغيل عند الحفظ",
                 copied: "تم النسخ!",
                 sent: "تم الإرسال!",
                 no_selection: "اختر سكريبت من القائمة",
                 no_file_selected: "لم يتم اختيار ملف",
                 loading: "جاري تحميل السكريبتات...",
                 compiled_file: "ملف مترجم (للقراءة فقط)",
+                companion_note: "المصدر المرافق — أعد الترجمة للتطبيق؛ إعادة التشغيل لا تحدّث الملف المترجم",
+                source_tag: "مصدر",
+                modified: "معدّل",
+                synchronized: "متزامن",
                 create_file: "إنشاء ملف جديد",
                 create_btn: "+ إنشاء ملف",
                 confirm_delete: "تأكيد الحذف",
@@ -1300,6 +1454,8 @@
                 current_name: "الحالي:",
                 new_name_label: "الاسم الجديد:",
                 new_resource_name: "أدخل اسم المورد الجديد",
+                enter_resource_name: "الرجاء إدخال اسم المورد",
+                enter_new_resource_name: "الرجاء إدخال اسم مورد جديد",
                 organizational_path_label: "المسار التنظيمي (اختياري):",
                 organizational_path: "مثال: سكريبتاتي (اختياري)",
                 rename: "إعادة تسمية",
@@ -1353,6 +1509,51 @@
             }, 100);
         }
 
+        function hasCodeMirrorMode(modeName) {
+            return typeof CodeMirror !== 'undefined' && CodeMirror.modes && CodeMirror.modes[modeName];
+        }
+
+        function resolveEditorMode(file) {
+            if (!file) {
+                return 'lua';
+            }
+
+            let type = file.type || '';
+            const path = file.path || '';
+            const ext = path.split('.').pop().toLowerCase();
+
+            if (type === 'client' || type === 'server' || type === 'shared' || ext === 'lua') {
+                return 'lua';
+            }
+
+            if (type === 'html' || ext === 'html') {
+                if (hasCodeMirrorMode('htmlmixed')) {
+                    return 'htmlmixed';
+                }
+                if (hasCodeMirrorMode('xml')) {
+                    return 'xml';
+                }
+                return null;
+            }
+
+            if (type === 'map' || type === 'meta' || ext === 'map' || ext === 'xml') {
+                if (hasCodeMirrorMode('xml')) {
+                    return 'xml';
+                }
+                return null;
+            }
+
+            return null;
+        }
+
+        function applyEditorMode(file) {
+            if (!codeMirrorEditor) {
+                return;
+            }
+            const mode = resolveEditorMode(file);
+            codeMirrorEditor.setOption('mode', mode);
+        }
+
         function setDefaultLanguage(lang) {
             if (languages[lang]) {
                 changeLanguage(lang);
@@ -1361,6 +1562,10 @@
 
         function changeLanguage(lang, event) {
             currentLanguage = lang;
+
+            if (event && typeof mta !== 'undefined' && mta.triggerEvent) {
+                mta.triggerEvent("luaEditor.setLanguage", lang);
+            }
 
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.classList.remove('active');
@@ -1552,7 +1757,11 @@
         function selectScript(scriptName, index, event) {
             currentScript = scriptName;
 
-            renderScriptsListIntelligent();
+            const scriptList = document.getElementById('scriptList');
+            scriptList.querySelectorAll('.script-item').forEach(item => {
+                const nameSpan = item.querySelector('.script-name');
+                item.classList.toggle('selected', nameSpan && nameSpan.textContent === scriptName);
+            });
 
             updateScriptInfo(filteredScripts[index]);
             clearEditor();
@@ -1619,15 +1828,30 @@
                     fileItem.classList.add('compiled');
                 }
 
+                if (file.companion) {
+                    fileItem.classList.add('companion');
+                }
+
+                if (currentFile && currentFile.path === file.path) {
+                    fileItem.classList.add('active');
+                }
+
                 const fileName = document.createElement('div');
                 fileName.className = 'file-name';
-                fileName.textContent = file.path;
-                fileName.title = file.path;
+                fileName.textContent = file.companion ? ('↳ ' + file.path) : file.path;
+                fileName.title = file.companion ? (languages[currentLanguage]['companion_note'] || file.path) : file.path;
                 fileName.onclick = (e) => selectFile(file, e);
 
                 fileItem.appendChild(fileName);
 
-                if (file.type !== 'meta') {
+                if (file.companion) {
+                    const tag = document.createElement('span');
+                    tag.className = 'companion-tag';
+                    tag.textContent = languages[currentLanguage]['source_tag'] || 'source';
+                    fileItem.appendChild(tag);
+                }
+
+                if (file.type !== 'meta' && !file.companion) {
                     const deleteBtn = document.createElement('button');
                     deleteBtn.className = 'delete-btn';
                     deleteBtn.innerHTML = '×';
@@ -1654,10 +1878,16 @@
 
             currentFile = file;
 
+            applyEditorMode(file);
+
             if (file.compiled) {
                 loadCompiledFile(file);
             } else {
                 loadEditableFile(file);
+            }
+
+            if (file.companion) {
+                showNotification(languages[currentLanguage]['companion_note'], 'warning');
             }
 
             updateEditorTabs();
@@ -1713,6 +1943,8 @@
                 tabClass += ' compiled';
             } else if (currentFile.type === 'meta') {
                 tabClass += ' meta';
+            } else if (currentFile.type === 'map') {
+                tabClass += ' map';
             } else {
                 tabClass += ' active';
             }
@@ -1739,10 +1971,10 @@
                 const currentCode = codeMirrorEditor ? codeMirrorEditor.getValue() : '';
 
                 if (currentCode !== originalCode) {
-                    statusEl.textContent = '● Modified';
+                    statusEl.innerHTML = '<span class="status-icon">●</span>' + languages[currentLanguage]['modified'];
                     statusEl.style.color = '#FF9800';
                 } else {
-                    statusEl.textContent = '✓ Synchronized';
+                    statusEl.innerHTML = '<span class="status-icon">✓</span>' + languages[currentLanguage]['synchronized'];
                     statusEl.style.color = '#4CAF50';
                 }
             }
@@ -1828,9 +2060,12 @@
             if (!currentFile || currentFile.compiled || !codeMirrorEditor) return;
 
             const newContent = codeMirrorEditor.getValue();
+            const restartCheckbox = document.getElementById('restartOnSave');
+            const isCompanion = currentFile && currentFile.companion;
+            const restartOnSave = (!isCompanion && restartCheckbox && restartCheckbox.checked) ? 1 : 0;
 
             if (typeof mta !== 'undefined' && mta.triggerEvent) {
-                mta.triggerEvent("luaEditor.saveFileContent", currentScript, currentFile.path, newContent);
+                mta.triggerEvent("luaEditor.saveFileContent", currentScript, currentFile.path, newContent, restartOnSave);
             }
 
             if (event && event.target) {
@@ -1878,14 +2113,18 @@
             hideDeleteModal();
         }
 
+        let notificationTimer = null;
         function showNotification(message, type = 'error') {
             const notification = document.getElementById('notification');
             notification.textContent = message;
-            notification.className = `notification ${type}`;
-            notification.classList.add('show');
+            notification.className = `notification ${type} show`;
 
-            setTimeout(() => {
+            if (notificationTimer) {
+                clearTimeout(notificationTimer);
+            }
+            notificationTimer = setTimeout(() => {
                 notification.classList.remove('show');
+                notificationTimer = null;
             }, 3000);
         }
 
@@ -1945,7 +2184,7 @@
             const orgDir = document.getElementById('organizationalDir').value.trim();
 
             if (!resourceName) {
-                showNotification('Please enter a resource name', 'warning');
+                showNotification(languages[currentLanguage]['enter_resource_name'], 'warning');
                 return;
             }
 
@@ -1974,7 +2213,7 @@
             const orgPath = document.getElementById('organizationalPath').value.trim();
 
             if (!newName) {
-                showNotification('Please enter a new resource name', 'warning');
+                showNotification(languages[currentLanguage]['enter_new_resource_name'], 'warning');
                 return;
             }
 
@@ -2175,9 +2414,60 @@
         window.onResourceDeleted = onResourceDeleted;
         window.receiveLogsData = receiveLogsData;
 
+        function centerPanel() {
+            const panel = document.getElementById('panel');
+            if (!panel) return;
+
+            const w = Math.min(1180, window.innerWidth - 20);
+            const h = Math.min(720, window.innerHeight - 20);
+            panel.style.width = w + 'px';
+            panel.style.height = h + 'px';
+
+            const left = Math.max(0, (window.innerWidth - panel.offsetWidth) / 2);
+            const top = Math.max(0, (window.innerHeight - panel.offsetHeight) / 2);
+            panel.style.left = left + 'px';
+            panel.style.top = top + 'px';
+        }
+
+        function initPanelDrag() {
+            const panel = document.getElementById('panel');
+            const header = panel ? panel.querySelector('.panel-header') : null;
+            if (!panel || !header) return;
+
+            let dragging = false;
+            let offsetX = 0;
+            let offsetY = 0;
+
+            header.addEventListener('mousedown', function(e) {
+                if (e.target.closest('.control-btn') || e.target.closest('.lang-btn')) {
+                    return;
+                }
+                dragging = true;
+                offsetX = e.clientX - panel.offsetLeft;
+                offsetY = e.clientY - panel.offsetTop;
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                if (!dragging) return;
+                let newLeft = e.clientX - offsetX;
+                let newTop = e.clientY - offsetY;
+                newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - panel.offsetWidth));
+                newTop = Math.max(0, Math.min(newTop, window.innerHeight - panel.offsetHeight));
+                panel.style.left = newLeft + 'px';
+                panel.style.top = newTop + 'px';
+            });
+
+            document.addEventListener('mouseup', function() {
+                dragging = false;
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             initCodeMirror();
             updateCharCount();
+            centerPanel();
+            initPanelDrag();
 
             if (typeof mta !== 'undefined' && mta.triggerEvent) {
                 setTimeout(() => {

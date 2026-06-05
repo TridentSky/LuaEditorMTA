@@ -1,9 +1,9 @@
 <meta>
-    <info author="BranD" name="Lua Editor" type="script" version="3.0" />
+    <info author="BranD" name="Lua Code Editor with CodeMirror" type="script" version="4.0.0" />
     <min_mta_version server="1.6" client="1.5.9" />
 
-    <script src="editorC.lua" type="client" cache="false" />
     <script src="editorS.lua" type="server" />
+    <script src="editorC.lua" type="client" />
 
     <file src="index.html" />
 

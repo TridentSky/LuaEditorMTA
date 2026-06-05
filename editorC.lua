@@ -1,12 +1,12 @@
 ------------------------------------------------------------------------------------------------
 --
 --  PROJECT:         Lua Editor MTA:SA
---  VERSION:         3.0
+--  VERSION:         4.0.0
 --  FILE:            editorC.lua
 --  PURPOSE:         Lua Code Editor Client-side Enhanced with Advanced Features
 --  DEVELOPERS:      [BranD] - Lead Developer
 --  CONTACT:         tridentskycompany@gmail.com | Discord: BrandSilva
---  COPYRIGHT:       © 2025 Brando Silva All rights reserved.
+--  COPYRIGHT:       © 2026 Brando Silva All rights reserved.
 --                   This software is protected by copyright laws.
 --                   Unauthorized distribution or modification is strictly prohibited.
 --
@@ -19,9 +19,7 @@ local defaultLanguage = "en"
 
 function createEditorPanel()
     if (editorGui) then
-        destroyElement(editorGui)
-        editorGui = nil
-        editorBrowser = nil
+        return true
     end
 
     local screenW, screenH = guiGetScreenSize()
@@ -138,6 +136,7 @@ function loadScriptFiles(scriptName, files)
         jsArray = jsArray .. '{'
         jsArray = jsArray .. 'path:"' .. file.path .. '",'
         jsArray = jsArray .. 'type:"' .. file.type .. '",'
+        jsArray = jsArray .. 'companion:' .. (file.companion and "true" or "false") .. ','
         jsArray = jsArray .. 'compiled:' .. (isCompiled and "true" or "false")
         jsArray = jsArray .. '}'
     end
@@ -199,12 +198,9 @@ end
 
 function closePanel()
     if (editorGui) then
-        removeEventHandler("onClientBrowserCreated", editorGui, onBrowserCreated)
-        destroyElement(editorGui)
-        editorGui = nil
-        editorBrowser = nil
+        guiSetVisible(editorGui, false)
         showCursor(false)
-        isMinimized = false
+        isMinimized = true
     end
 end
 addEvent("luaEditor.closePanel", true)
@@ -252,13 +248,21 @@ end
 addEvent("luaEditor.requestFileContent", true)
 addEventHandler("luaEditor.requestFileContent", root, requestFileContent)
 
-function saveFileContent(scriptName, filePath, content)
+function saveFileContent(scriptName, filePath, content, restartOnSave)
     if (scriptName and filePath and content and scriptName ~= "" and filePath ~= "") then
-        triggerServerEvent("luaEditor.saveFileContent", localPlayer, scriptName, filePath, content)
+        triggerServerEvent("luaEditor.saveFileContent", localPlayer, scriptName, filePath, content, restartOnSave)
     end
 end
 addEvent("luaEditor.saveFileContent", true)
 addEventHandler("luaEditor.saveFileContent", root, saveFileContent)
+
+function onSetLanguage(lang)
+    if (type(lang) == "string" and lang ~= "") then
+        defaultLanguage = lang
+    end
+end
+addEvent("luaEditor.setLanguage", true)
+addEventHandler("luaEditor.setLanguage", root, onSetLanguage)
 
 function deleteFile(scriptName, filePath)
     if (scriptName and filePath and scriptName ~= "" and filePath ~= "") then

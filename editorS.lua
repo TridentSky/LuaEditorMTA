@@ -1,12 +1,12 @@
 ------------------------------------------------------------------------------------------------
 --
 --  PROJECT:         Lua Editor MTA:SA
---  VERSION:         3.0
+--  VERSION:         4.0.0
 --  FILE:            editorS.lua
 --  PURPOSE:         Lua Code Editor Server-side Enhanced with Advanced Features
 --  DEVELOPERS:      [BranD] - Lead Developer
 --  CONTACT:         tridentskycompany@gmail.com | Discord: BrandSilva
---  COPYRIGHT:       © 2025 Brando Silva All rights reserved.
+--  COPYRIGHT:       © 2026 Brando Silva All rights reserved.
 --                   This software is protected by copyright laws.
 --                   Unauthorized distribution or modification is strictly prohibited.
 --
@@ -14,24 +14,26 @@
 
 local permissionACL = "Admin"               -- ACL group required to use the editor (Admin = Admin level)
 local enableBlackList = false               -- Block specific resources from being edited
-local enableWhiteList = false               -- Allow only specific resources to be edited
+local enableWhiteList = false               -- Allow only resources listed in whiteList below to be edited (opt-in lockdown)
 local enableDeleteFiles = true              -- Allow deletion of individual script files
 local enableDeleteResources = true          -- Allow deletion of entire resources
 local enableSelfEdit = false                -- Allow editing the Lua Editor resource itself
 local enableLogs = true                     -- Enable activity logging to database
-local enableFunctionBlacklist = false       -- Block dangerous Lua functions in code
+local enableFunctionBlacklist = false       -- Block dangerous Lua functions in code (NOTE: substring-based, easily bypassed — NOT a real security boundary, only a guardrail)
 local maxLogEntries = 400                   -- Maximum number of log entries to store
-local resourceBasePath = ""                 -- Restrict editing to specific folder (e.g., "[ADMIN]" or "" for all)
+local resourceBasePath = ""                 -- Restrict editing to a specific folder (e.g., "[ADMIN]" or "" for all)
 
+-- With enableWhiteList = true (default), add the resource names YOU want to be editable here.
+-- Anyone with the ACL permission can run arbitrary server Lua through any editable resource, so keep this list minimal.
 local whiteList = {
-    "ScriptName",
+    -- "MyResource",
 }
 
 local blackList = {
-    "ScriptName",
+    -- "SomeResource",
 }
 
-local functionBlacklist = { -- example dangerous functions
+local functionBlacklist = { -- example dangerous functions (guardrail only, NOT a security boundary)
     "loadstring",
     "setAccountPassword",
     "removeAccount",
@@ -43,6 +45,47 @@ local functionBlacklist = { -- example dangerous functions
 }
 
 local logsDatabase = nil
+
+local spamTimers = {}
+
+function isSpamming(player, key, cooldown)
+    cooldown = cooldown or 500
+    if (not isElement(player)) then
+        return true
+    end
+    if (not spamTimers[player]) then
+        spamTimers[player] = {}
+    end
+    local now = getTickCount()
+    local last = spamTimers[player][key]
+    if (last and (now - last) < cooldown) then
+        return true
+    end
+    spamTimers[player][key] = now
+    return false
+end
+
+function onEditorPlayerQuit()
+    if (spamTimers[source]) then
+        spamTimers[source] = nil
+    end
+end
+addEventHandler("onPlayerQuit", root, onEditorPlayerQuit)
+
+local editableExtensions = {
+    lua = true,
+    html = true,
+    map = true,
+    xml = true,
+}
+
+function isEditableExtension(filePath)
+    local ext = string.match(filePath, "%.([^%.%/]+)$")
+    if (not ext) then
+        return false
+    end
+    return editableExtensions[string.lower(ext)] == true
+end
 
 function checkResourcePermissions()
     local thisResource = getThisResource()
@@ -331,18 +374,43 @@ function getDetailedResourceFiles(resourceName)
                     path = scriptPath,
                     type = scriptType
                 })
+
+                -- If this script is compiled (e.g. client.luac), surface its uncompiled
+                -- source companion (client.lua) when it still exists on disk, so it can be edited.
+                if (string.find(scriptPath, "c$")) then
+                    local sourcePath = string.sub(scriptPath, 1, -2)
+                    if (sourcePath ~= scriptPath and fileExists(":" .. resourceName .. "/" .. sourcePath)) then
+                        table.insert(files, {
+                            path = sourcePath,
+                            type = scriptType,
+                            companion = true
+                        })
+                    end
+                end
             end
         elseif (nodeName == "file") then
             local filePath = xmlNodeGetAttribute(node, "src")
 
             if (filePath) then
                 local fileExt = string.match(filePath, "%.([^%.]+)$")
-                if (fileExt and string.lower(fileExt) == "html") then
-                    table.insert(files, {
-                        path = filePath,
-                        type = "html"
-                    })
+                if (fileExt) then
+                    fileExt = string.lower(fileExt)
+                    if (fileExt == "html" or fileExt == "map") then
+                        table.insert(files, {
+                            path = filePath,
+                            type = fileExt
+                        })
+                    end
                 end
+            end
+        elseif (nodeName == "map") then
+            local filePath = xmlNodeGetAttribute(node, "src")
+
+            if (filePath) then
+                table.insert(files, {
+                    path = filePath,
+                    type = "map"
+                })
             end
         end
     end
@@ -368,7 +436,7 @@ function updateMetaXmlFile(resourceName, filePath, actionType)
     if (actionType == "delete") then
         for i, node in ipairs(xmlNodeGetChildren(metaFile)) do
             local nodeName = xmlNodeGetName(node)
-            if (nodeName == "script" or nodeName == "file") then
+            if (nodeName == "script" or nodeName == "file" or nodeName == "map") then
                 local scriptPath = xmlNodeGetAttribute(node, "src")
                 if (scriptPath == filePath) then
                     xmlDestroyNode(node)
@@ -392,6 +460,8 @@ function updateMetaXmlFile(resourceName, filePath, actionType)
         local newScriptLine = ""
         if (fileType == "html") then
             newScriptLine = '    <file src="' .. fileName .. '" />'
+        elseif (fileType == "map") then
+            newScriptLine = '    <map src="' .. fileName .. '" dimension="0" />'
         else
             newScriptLine = '    <script src="' .. fileName .. '" type="' .. fileType .. '" />'
         end
@@ -435,6 +505,9 @@ function requestScriptsList()
     if (not client) then
         return
     end
+    if (isSpamming(client, "scriptsList", 1000)) then
+        return
+    end
     if (not hasPermission(client)) then
         outputChatBox("Access denied: Insufficient permissions", client, 255, 0, 0)
         return
@@ -448,6 +521,9 @@ addEventHandler("luaEditor.requestScriptsList", root, requestScriptsList)
 
 function requestScriptFiles(scriptName)
     if (not client) then
+        return
+    end
+    if (isSpamming(client, "scriptFiles", 300)) then
         return
     end
     if (not hasPermission(client)) then
@@ -474,6 +550,9 @@ addEventHandler("luaEditor.requestScriptFiles", root, requestScriptFiles)
 
 function requestFileContent(scriptName, filePath)
     if (not client) then
+        return
+    end
+    if (isSpamming(client, "fileContent", 250)) then
         return
     end
     if (not hasPermission(client)) then
@@ -539,8 +618,11 @@ end
 addEvent("luaEditor.requestFileContent", true)
 addEventHandler("luaEditor.requestFileContent", root, requestFileContent)
 
-function saveFileContent(scriptName, filePath, content)
+function saveFileContent(scriptName, filePath, content, restartOnSave)
     if (not client) then
+        return
+    end
+    if (isSpamming(client, "save", 400)) then
         return
     end
     if (not hasPermission(client)) then
@@ -583,6 +665,12 @@ function saveFileContent(scriptName, filePath, content)
     if (string.find(scriptName, "%.%.") or string.find(filePath, "%.%.")) then
         outputChatBox("Error: Invalid path traversal detected", client, 255, 0, 0)
         triggerClientEvent(client, "luaEditor.onFileSaved", client, false, "Invalid path")
+        return
+    end
+
+    if (not isEditableExtension(filePath)) then
+        outputChatBox("Error: This file type cannot be edited", client, 255, 0, 0)
+        triggerClientEvent(client, "luaEditor.onFileSaved", client, false, "File type not editable")
         return
     end
 
@@ -647,12 +735,34 @@ function saveFileContent(scriptName, filePath, content)
     local playerName = getPlayerName(client)
     local accountName = getAccountName(getPlayerAccount(client))
     addLogEntry(playerName, accountName, "EDIT", scriptName, filePath, "File modified")
+
+    if (restartOnSave == true or tonumber(restartOnSave) == 1) then
+        local targetResource = getResourceFromName(scriptName)
+        if (targetResource) then
+            local restarted = false
+            if (getResourceState(targetResource) == "running") then
+                restarted = restartResource(targetResource)
+            else
+                restarted = startResource(targetResource)
+            end
+
+            if (restarted) then
+                outputChatBox("Resource restarted: " .. scriptName, client, 0, 255, 0)
+                addLogEntry(playerName, accountName, "RESTART", scriptName, filePath, "Auto-restart on save")
+            else
+                outputChatBox("Saved, but failed to restart: " .. scriptName, client, 255, 180, 0)
+            end
+        end
+    end
 end
 addEvent("luaEditor.saveFileContent", true)
 addEventHandler("luaEditor.saveFileContent", root, saveFileContent)
 
 function deleteFileFromResource(scriptName, filePath)
     if (not client) then
+        return
+    end
+    if (isSpamming(client, "deleteFile", 700)) then
         return
     end
     if (not hasPermission(client)) then
@@ -730,6 +840,9 @@ function createNewFile(scriptName, fileName, fileType)
     if (not client) then
         return
     end
+    if (isSpamming(client, "createFile", 700)) then
+        return
+    end
     if (not hasPermission(client)) then
         outputChatBox("Access denied: Insufficient permissions", client, 255, 0, 0)
         triggerClientEvent(client, "luaEditor.onFileCreated", client, false, "Access denied")
@@ -752,7 +865,7 @@ function createNewFile(scriptName, fileName, fileType)
         return
     end
 
-    if (fileType ~= "client" and fileType ~= "server" and fileType ~= "shared" and fileType ~= "html") then
+    if (fileType ~= "client" and fileType ~= "server" and fileType ~= "shared" and fileType ~= "html" and fileType ~= "map") then
         outputChatBox("Error: Invalid file type", client, 255, 0, 0)
         triggerClientEvent(client, "luaEditor.onFileCreated", client, false, "Invalid file type")
         return
@@ -770,6 +883,10 @@ function createNewFile(scriptName, fileName, fileType)
     if (fileType == "html") then
         if (not string.find(fileName, "%.html$")) then
             fileName = fileName .. ".html"
+        end
+    elseif (fileType == "map") then
+        if (not string.find(fileName, "%.map$")) then
+            fileName = fileName .. ".map"
         end
     else
         if (not string.find(fileName, "%.lua$")) then
@@ -804,6 +921,8 @@ function createNewFile(scriptName, fileName, fileType)
 
 </body>
 </html>]]
+    elseif (fileType == "map") then
+        fileTemplate = "<map>\n\n</map>"
     end
 
     local newFile = fileCreate(fullPath)
@@ -834,6 +953,9 @@ addEventHandler("luaEditor.createFile", root, createNewFile)
 
 function createNewResource(resourceName, organizationalDir)
     if (not client) then
+        return
+    end
+    if (isSpamming(client, "createResource", 1500)) then
         return
     end
     if (not hasPermission(client)) then
@@ -926,6 +1048,9 @@ function renameResourceName(oldResourceName, newResourceName, organizationalPath
     if (not client) then
         return
     end
+    if (isSpamming(client, "renameResource", 1500)) then
+        return
+    end
     if (not hasPermission(client)) then
         outputChatBox("Access denied: Insufficient permissions", client, 255, 0, 0)
         triggerClientEvent(client, "luaEditor.onResourceRenamed", client, false, "Access denied")
@@ -997,6 +1122,9 @@ addEventHandler("luaEditor.renameResource", root, renameResourceName)
 
 function deleteResourceCompletely(resourceName)
     if (not client) then
+        return
+    end
+    if (isSpamming(client, "deleteResource", 1500)) then
         return
     end
 
@@ -1098,6 +1226,9 @@ addEventHandler("luaEditor.deleteResource", root, deleteResourceCompletely)
 
 function requestLogs()
     if (not client) then
+        return
+    end
+    if (isSpamming(client, "logs", 1000)) then
         return
     end
     if (not hasPermission(client)) then
