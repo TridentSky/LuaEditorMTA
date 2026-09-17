@@ -1,8 +1,8 @@
 # In-Game Lua Editor for MTA:SA v4.0
 
 [![MTA:SA](https://img.shields.io/badge/MTA%3ASA-Compatible-blue)](https://multitheftauto.com/)
-[![Version](https://img.shields.io/badge/version-4.0-green)](https://github.com/TridentSky/LuaEditorMTA)
-[![License](https://img.shields.io/badge/license-Free-brightgreen)](https://github.com/TridentSky/LuaEditorMTA)
+[![Version](https://img.shields.io/badge/version-4.0-green)](https://github.com/BrandSilva/LuaEditorMTA)
+[![License](https://img.shields.io/badge/license-Free-brightgreen)](https://github.com/BrandSilva/LuaEditorMTA)
 
 **FORUM:** [In-Game Lua Editor - MTA:SA](https://forum.multitheftauto.com/topic/146355-professional-in-game-lua-editor-free-release/)
 
